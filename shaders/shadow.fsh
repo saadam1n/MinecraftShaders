@@ -6,5 +6,5 @@ varying vec4 color;
 #include "util/commonfuncs.glsl"
 
 void main() {
-    gl_FragData[0] = texture2D(texture, texcoords) * color;
+    gl_FragData[0] = texture2DLod(texture, texcoords, 0) * color;
 }
