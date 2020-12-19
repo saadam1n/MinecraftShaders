@@ -6,11 +6,9 @@
 #include "uniforms.glsl"
 #include "structures.glsl"
 
-#ifndef HARDWARE_SHADOW_FILTERING
-vec4 shadow2D(in sampler2D ShadowDepth, in vec3 coords){ 
+vec4 CalculateShadow(in sampler2D ShadowDepth, in vec3 coords){ 
     return vec4(step(coords.z, texture2D(ShadowDepth, coords.xy).r));
 }
-#endif
 
 vec3 DistortShadow(vec3 pos);
 
@@ -167,42 +165,95 @@ vec3 PostProcessShadow(in vec3 color, in SurfaceStruct Surface){
     return FadeShadowColor(color, Surface);
 }
 
+// https://www.geeksforgeeks.org/total-area-two-overlapping-rectangles/ 
+
+struct Square {
+    vec2 Center;
+    float Side;
+};
+
+struct SquareBounds {
+    vec2 Left;
+    vec2 Right;
+};
+
+SquareBounds CreateBounds(in Square s){
+    SquareBounds bounds;
+    vec2 BoundsOffset = vec2(s.Side * 0.5f);
+    bounds.Right = s.Center + BoundsOffset;
+    bounds.Left = s.Center - BoundsOffset;
+    return bounds;
+}
+
+float GetCommonArea(in Square lhs, in Square rhs) {
+    SquareBounds bounds_rhs = CreateBounds(rhs), bounds_lhs = CreateBounds(lhs);
+    float X = min(bounds_rhs.Right.x, bounds_lhs.Right.x) - max(bounds_rhs.Left.x, bounds_lhs.Left.x);
+    float Y = min(bounds_rhs.Right.y, bounds_lhs.Right.y) - max(bounds_rhs.Left.x, bounds_lhs.Left.y);
+    //X = saturate(X);
+    //Y = saturate(Y);
+    // In this case we will know that the squares will intersect
+    return X * Y;
+}
+
+// https://hub.jmonkeyengine.org/t/round-with-glsl/8186 
+vec2 Round(in vec2 coords){
+    vec2 signum=sign(coords);//1
+    coords=abs(coords);//2
+    vec2 coords2 =fract(coords);//3
+    coords=floor(coords);//4
+    coords2=ceil((sign(coords2-0.5)+1.0)*0.5);//5
+    coords=(coords+coords2)*signum;
+    return coords;
+}
+
+// Tool to analytically find the soft shadow
+float CalculateShadowContribution(in vec2 offset, in vec2 origin){
+    // Calculate the actual orgin 
+    vec2 ResCoords = origin * shadowMapResolution;
+    vec2 Rounded = Round(ResCoords);
+    Square Sample;
+    Sample.Center = offset;
+    Sample.Side = 1.0f;
+    Square ShadowSampleArea;
+    ShadowSampleArea.Center = Rounded - ResCoords;
+    ShadowSampleArea.Side = ShadowSamplesPerSide;
+    // We find the shared area between the sample
+    float SharedArea = GetCommonArea(Sample, ShadowSampleArea);
+    return SharedArea / ShadowArea;
+}
+
+vec3 ComputeVisibility(in vec3 ShadowCoord){
+    float ShadowVisibility0 = shadow2D(shadowtex0, ShadowCoord, 0).r;
+    float ShadowVisibility1 = shadow2D(shadowtex1, ShadowCoord, 0).r;
+    vec4 ShadowColor0 = texture2D(shadowcolor0, ShadowCoord.xy);
+    vec3 TransmittedColor = ShadowColor0.rgb * ShadowColor0.a;
+    return mix(TransmittedColor * ShadowVisibility1, vec3(1.0f), ShadowVisibility0);
+}
+
 vec3 ComputeShadow(in SurfaceStruct Surface){
     // TODO: precompute length(ShadowPos.xy) when doing shadow distortion calculations
     float DiffThresh = length(Surface.ShadowScreen.xy) + 0.10f;
     DiffThresh *= 3.0f / (shadowMapResolution / 2048.0f);
     // The max() is to get rid of a shadowing bug near the player
     // DistortionFactor * DistortionFactor causes it, I'm not sure why though
-    float AdjustedShadowDepth = Surface.ShadowScreen.z - max(0.0028f * DiffThresh * (1.0f - Surface.NdotL) * Surface.Distortion * Surface.Distortion, 0.00015f);
-    #ifdef SOFT_SHADOWS
+    float AdjustedShadowDepth = Surface.ShadowScreen.z - max(0.0028f * DiffThresh * (1.0f - Surface.NdotL) * Surface.Distortion * Surface.Distortion, 0.00015f) * 2.0f;
     #ifdef SOFT_SHADOW_ROTATION
     mat2 Transformation = CreateRandomRotationScreen(Surface.Screen.xy + frameTimeCounter) * SoftShadowScale;
     #else
     vec2 Transformation = vec2(SoftShadowScale);
     #endif
     vec3 ShadowAccum = vec3(0.0f);
-    for(float x = -SHADOW_SAMPLES; x <= SHADOW_SAMPLES; x+= ShadowStep){
-        for(float y = -SHADOW_SAMPLES; y <= SHADOW_SAMPLES; y+= ShadowStep){
-            vec3 ShadowHardwareFilterCoord = vec3(Surface.ShadowScreen.xy + vec2(x, y) * Transformation, AdjustedShadowDepth);
-            float ShadowVisibility0 = shadow2D(shadowtex0, ShadowHardwareFilterCoord).r;
-            float ShadowVisibility1 = shadow2D(shadowtex1, ShadowHardwareFilterCoord).r;
-            vec4 ShadowColor0 = texture2D(shadowcolor0, ShadowHardwareFilterCoord.xy);
-            vec3 TransmittedColor = ShadowColor0.rgb * ShadowColor0.a;
-            vec3 ShadedColor = mix(TransmittedColor * ShadowVisibility1, vec3(1.0f), ShadowVisibility0);
-            ShadowAccum += ShadedColor;
+    for(float y = -SHADOW_SAMPLES; y <= SHADOW_SAMPLES; y += ShadowStep){
+        for(float x = -SHADOW_SAMPLES; x <= SHADOW_SAMPLES; x+= ShadowStep){
+            ShadowAccum += ComputeVisibility(vec3(Surface.ShadowScreen.xy + vec2(x, y) * Transformation, AdjustedShadowDepth));
         }
     }
-    ShadowAccum /= ShadowSamplesTotal;
+    ShadowAccum *= 1.0f / ShadowQualityArea;
     return PostProcessShadow(ShadowAccum, Surface);
-    #else
-    vec3 ShadowHardwareFilterCoord = vec3(Surface.ShadowScreen.xy, AdjustedShadowDepth);
-    float ShadowVisibility0 = shadow2D(shadowtex0, ShadowHardwareFilterCoord).r;
-    float ShadowVisibility1 = shadow2D(shadowtex1, ShadowHardwareFilterCoord).r;
-    vec4 ShadowColor0 = texture2D(shadowcolor0, ShadowHardwareFilterCoord.xy);
-    vec3 TransmittedColor = ShadowColor0.rgb * ShadowColor0.a;
-    vec3 ShadedColor = mix(TransmittedColor * ShadowVisibility1, vec3(1.0f), ShadowVisibility0);
-    return PostProcessShadow(ShadedColor, Surface);
-    #endif
+}
+
+vec3 GetLightDirection(void){
+    return normalize((shadowModelViewInverse * vec4(0.0, 0.0, 1.0, 0.0)).xyz);
 }
 
 float CalculateDensityRayleigh(float h){
@@ -262,7 +313,7 @@ void ComputeLightmap(in SurfaceStruct Surface, inout ShadingStruct Shading){
 
 // Better name would be construct, but constructors don't exist in a functional programming language
 void CreateSurfaceStructDeferred(in vec2 texcoords, in vec3 l, out SurfaceStruct Surface){
-    Surface.Diffuse = texture2D(colortex0, texcoords).rgb;
+    Surface.Diffuse = texture2D(colortex0, texcoords);
     Surface.Normal = texture2D(colortex1, texcoords).rgb * 2.0f - 1.0f;
 
     vec2 LightMap = texture2D(colortex2, texcoords).st; 
@@ -282,7 +333,38 @@ void CreateSurfaceStructDeferred(in vec2 texcoords, in vec3 l, out SurfaceStruct
     Surface.Distortion = DistortionFactor(Surface.ShadowClip.xy);
     Surface.ShadowScreen = vec3((Surface.ShadowClip.xy * 1.0f / Surface.Distortion), Surface.ShadowClip.z * ShadowDepthCompressionFactor) * 0.5f + 0.5f;
 
-    Surface.NdotL = max(dot(Surface.Normal, l), 0.0f);
+    Surface.NdotL = dotunorm(Surface.Normal, l);
+}
+
+vec3 GetScreenCoords(in vec4 fragcoord){
+    //fragcoord.xyz *= fragcoord.w;
+    // Move this to vert shader if possible
+    vec2 Screen = fragcoord.xy / vec2(viewWidth, viewHeight);
+    return vec3(Screen, fragcoord.z);
+}
+
+void CreateSurfaceStructForward(in vec3 fragcoord, in vec3 normal, in vec3 l, out SurfaceStruct Surface){
+    Surface.Diffuse = texture2D(texture, gl_TexCoord[0].st);
+    Surface.Normal = normal;
+
+    vec2 LightMap = gl_TexCoord[1].st; 
+    Surface.Torch = LightMap.x;
+    Surface.Sky = LightMap.y;
+    AdjustLightMap(Surface);
+
+    // In a way the screen space coords contain the texcoords
+    Surface.Screen = vec3(fragcoord.xy, fragcoord.z);
+    Surface.Clip = Surface.Screen * 2.0f - 1.0f;
+    vec4 UnDivW = gbufferProjectionInverse * vec4(Surface.Clip, 1.0f);
+    Surface.View = UnDivW.xyz / UnDivW.w;
+    Surface.Player = (gbufferModelViewInverse * vec4(Surface.View, 1.0f)).xyz;
+    Surface.World = Surface.Player + cameraPosition;
+    UnDivW = shadowProjection * shadowModelView * vec4(Surface.Player, 1.0f);
+    Surface.ShadowClip = UnDivW.xyz;// / UnDivW.w;
+    Surface.Distortion = DistortionFactor(Surface.ShadowClip.xy);
+    Surface.ShadowScreen = vec3((Surface.ShadowClip.xy * 1.0f / Surface.Distortion), Surface.ShadowClip.z * ShadowDepthCompressionFactor) * 0.5f + 0.5f;
+
+    Surface.NdotL = dotunorm(Surface.Normal, l);
 }
 
 vec3 CalculateSunShading(in SurfaceStruct Surface){
@@ -296,8 +378,9 @@ void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading){
 
 void ComputeColor(in SurfaceStruct Surface, inout ShadingStruct Shading){
     vec3 Lighting = Shading.Sun + Shading.Torch + Shading.Sky;
-    Shading.Color = Surface.Diffuse * Lighting;
-    //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st).rgb;
+    Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f);
+    //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st);
+    //Shading.Color = vec4(vec3(Surface.NdotL), 1.0f);
 }
 
 #endif
