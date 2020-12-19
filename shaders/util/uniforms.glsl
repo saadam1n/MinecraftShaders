@@ -16,13 +16,8 @@ uniform mat4 shadowModelViewInverse;
 uniform vec3 cameraPosition;
 
 // Shadow samplers
-#ifdef HARDWARE_SHADOW_FILTERING
 uniform sampler2DShadow shadowtex0;
 uniform sampler2DShadow shadowtex1;
-#else
-uniform sampler2D shadowtex0;
-uniform sampler2D shadowtex1;
-#endif
 uniform sampler2D shadowcolor0;
 uniform sampler2D shadowcolor1;
 
