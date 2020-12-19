@@ -3,7 +3,7 @@
 
 // Use the same names that SEUS V10.1 did
 struct SurfaceStruct {
-    vec3 Diffuse;
+    vec4 Diffuse;
     vec3 Normal;
 
     vec3 Screen;
@@ -23,7 +23,7 @@ struct SurfaceStruct {
 };
 
 struct ShadingStruct {
-    vec3 Color;
+    vec4 Color;
 
     vec3 Sun;
     vec3 Torch;
