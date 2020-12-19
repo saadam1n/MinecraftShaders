@@ -10,10 +10,9 @@ varying vec3 LightDirection;
 void main(){
     SurfaceStruct Surface;
     ShadingStruct Shading;
-    CreateSurfaceStructDeferred(texcoords, LightDirection, Surface);
+    CreateSurfaceStructDeferred(gl_TexCoord[0].st, LightDirection, Surface);
     ShadeSurfaceStruct(Surface, Shading); 
     ComputeColor(Surface, Shading);
-    //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st).rgb;
     /* DRAWBUFFERS:7 */
-    gl_FragData[0] = vec4(Shading.Color, 1.0f);
+    gl_FragData[0] = Shading.Color;
 }
