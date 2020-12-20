@@ -67,10 +67,6 @@ float DistortionFactor(in vec2 position) {
     return (1.0f - SHADOW_MAP_BIAS) + len * SHADOW_MAP_BIAS;
 }
 
-#define SHADOW_DISTORTION // Increase shadow quality near the player while lowering shadow quality farther from the player. Negligible performance loss.
-
-#ifdef SHADOW_DISTORTION
-
 vec2 DistortShadowCoords(in vec2 shadowcoords){
     return shadowcoords * 1.0f / DistortionFactor(shadowcoords);
 }
@@ -79,21 +75,6 @@ vec3 DistortShadowPos(in vec3 ShadowPos){
     return vec3(DistortShadowCoords(ShadowPos.xy), ShadowPos.z * ShadowDepthCompressionFactor);
 }
 
-#else
-
-vec2 DistortShadowCoords(in vec2 shadowcoords){
-    return shadowcoords;
-}
-
-vec3 DistortShadowPos(in vec3 ShadowPos){
-    return ShadowPos;
-}
-
-vec2 DistortShadowCoordsInverse(in vec2 dshadowcoords){
-    return dshadowcoords;
-}
-
-#endif
 
 vec3 DistortShadow(vec3 pos) {
     return DistortShadowPos(pos);
