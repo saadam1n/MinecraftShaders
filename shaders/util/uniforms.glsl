@@ -31,6 +31,8 @@ uniform sampler2D colortex5;
 uniform sampler2D colortex6;
 uniform sampler2D colortex7;
 
+#define debugTex colortex4
+
 // Depth samplers
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
@@ -46,7 +48,10 @@ uniform int worldTime;
 uniform float viewWidth;
 uniform float viewHeight;
 uniform float rainStrength;
+uniform float wetness;
 uniform float far;
 uniform float near;
+
+uniform vec3 sunPosition;
 
 #endif

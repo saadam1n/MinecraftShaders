@@ -6,6 +6,7 @@
 #include "uniforms.glsl"
 #include "structures.glsl"
 
+
 vec4 CalculateShadow(in sampler2D ShadowDepth, in vec3 coords){ 
     return vec4(step(coords.z, texture2D(ShadowDepth, coords.xy).r));
 }
@@ -63,7 +64,7 @@ const float SHADOW_DISTORT_EXP = 3;
 const float  SHADOW_DISTORT_ROOT = 1.0f / SHADOW_DISTORT_EXP;
 
 float DistortionFactor(in vec2 position) {
-    float len = sqrt(position.x * position.x + position.y * position.y);
+    float len = sqrt(position.x * position.x + position.y * position.y) * 0.9f;
     return (1.0f - SHADOW_MAP_BIAS) + len * SHADOW_MAP_BIAS;
 }
 
@@ -114,9 +115,6 @@ float Gaussian(float stddev, float x){
     return pow(MATH_PI * stddev2_2, -0.5f) * exp(-(x * x / stddev2_2));
 }
 
-const float ScaleHeightRayleigh = 7994.0f;
-const float ScaleHeightMie = 1200.0f;
-
 // This is based off continuum's tutorial, I might switch to a guassian method instead later
 mat2 CreateRandomRotation(in vec2 texcoord){
 	float Rotation = texture2D(noisetex, texcoord).r;
@@ -142,8 +140,8 @@ vec3 FadeShadowColor(in vec3 color, in SurfaceStruct Surface){
 }
 
 vec3 PostProcessShadow(in vec3 color, in SurfaceStruct Surface){
-    color = mix(color, vec3(0.0f), rainStrength);
-    return FadeShadowColor(color, Surface);
+    color = FadeShadowColor(color, Surface);
+    return mix(color, vec3(0.0f), rainStrength);
 }
 
 // https://www.geeksforgeeks.org/total-area-two-overlapping-rectangles/ 
@@ -212,17 +210,13 @@ vec3 ComputeVisibility(in vec3 ShadowCoord){
 }
 
 vec3 ComputeShadow(in SurfaceStruct Surface){
-    // TODO: precompute length(ShadowPos.xy) when doing shadow distortion calculations
+    if(rainStrength > 0.99f){
+        return vec3(0.0f);
+    }
     float DiffThresh = length(Surface.ShadowScreen.xy) + 0.10f;
     DiffThresh *= 3.0f / (shadowMapResolution / 2048.0f);
-    // The max() is to get rid of a shadowing bug near the player
-    // DistortionFactor * DistortionFactor causes it, I'm not sure why though
     float AdjustedShadowDepth = Surface.ShadowScreen.z - max(0.0028f * DiffThresh * (1.0f - Surface.NdotL) * Surface.Distortion * Surface.Distortion, 0.00015f) * 2.0f;
-    #ifdef SOFT_SHADOW_ROTATION
     mat2 Transformation = CreateRandomRotationScreen(Surface.Screen.xy + frameTimeCounter) * SoftShadowScale;
-    #else
-    vec2 Transformation = vec2(SoftShadowScale);
-    #endif
     vec3 ShadowAccum = vec3(0.0f);
     for(float y = -SHADOW_SAMPLES; y <= SHADOW_SAMPLES; y += ShadowStep){
         for(float x = -SHADOW_SAMPLES; x <= SHADOW_SAMPLES; x+= ShadowStep){
@@ -237,12 +231,42 @@ vec3 GetLightDirection(void){
     return normalize((shadowModelViewInverse * vec4(0.0, 0.0, 1.0, 0.0)).xyz);
 }
 
-float CalculateDensityRayleigh(float h){
-    return exp(-h/ScaleHeightRayleigh);
+vec3 ApplyFog(in vec3 color, in vec3 worldpos){
+    float dist = distance(worldpos, gbufferModelView[3].xyz);
+    vec3 toPos = normalize(worldpos - gbufferModelView[3].xyz);
+    float strength = 1.0f - max(dot(toPos, vec3(0.0f, 1.0f, 0.0f)), 0.0f);
+    float extinction = exp(dist * 0.1f);
+    float inscattering = exp(dist * 0.1f) * strength;
+    vec3 FoggyColor = color * extinction + inscattering * vec3(1.0f);
+    return FoggyColor;
 }
 
-float CalculateDensityMie(float h){
-    return exp(-h/ScaleHeightMie);
+// Originally aken from Continuum shaders
+// Desmos copy paste
+// clamp: c\left(x,\ l,\ u\right)=\max\left(\min\left(x,\ u\right),l\right)
+// function: c\left(\max\left(\frac{1.0}{\left(5.6\left(1.0\ -\ c\left(1.1x,\ 0.0,\ 1.0\right)\right)\right)^{2.0}}-0.02435,\ 0.0\right),\ 0.0,\ 1.0\right)^{0.9}
+float GetLightMapTorchContinuum(in float lightmap) {
+	lightmap 		= clamp(lightmap * 1.10f, 0.0f, 1.0f);
+	lightmap 		= 1.0f - lightmap;
+	lightmap 		*= 5.6f;
+	lightmap 		= 1.0f / pow((lightmap + 0.8f), 2.0f);
+	lightmap 		-= 0.02435f;
+	lightmap 		= max(0.0f, lightmap);
+	//lightmap 		*= 0.008f;
+	lightmap 		= clamp(lightmap, 0.0f, 1.0f);
+	lightmap 		= pow(lightmap, 0.9f);
+	return lightmap;
+}
+// A more appoximate but faster version
+// k\left(x^{p}\right)+o
+// k=3.9
+// p=5.06
+// o=0.02435
+float GetLightMapTorchApprox(in float lightmap) {
+    const float K = 2.0f;
+    const float P = 5.06f;
+    const float Offset = 0.02435f;
+    return K * pow(lightmap, P) + Offset;
 }
 
 vec3 GetSkyTopColor(void){
@@ -256,35 +280,9 @@ vec3 GetSkyTopColor(void){
     return vec3 (Red, Green, Blue);
 }
 
-//#define ATMOSPHERIC_SCATTERING
-
-vec3 ApplyFog(in vec3 color, in vec3 worldpos){
-    float dist = distance(worldpos, gbufferModelView[3].xyz);
-    vec3 toPos = normalize(worldpos - gbufferModelView[3].xyz);
-    float strength = 1.0f - max(dot(toPos, vec3(0.0f, 1.0f, 0.0f)), 0.0f);
-    float extinction = exp(dist * 0.1f);
-    float inscattering = exp(dist * 0.1f) * strength;
-    vec3 FoggyColor = color * extinction + inscattering * vec3(1.0f);
-    return FoggyColor;
-}
-
-vec3 ComputeSkyGradient(in vec3 light, in vec3 dir){
-    vec3 Top = GetSkyTopColor();
-    vec3 Fog = ApplyFog(Top, GetWorldSpace());
-    return Fog;
-}
-
-vec3 ComputeSkyColor(vec3 light, in vec3 dir){
-    #ifdef ATMOSPHERIC_SCATTERING
-    return dir * 0.5f + 0.5f;
-    #else
-    return ComputeSkyGradient(light, dir);
-    #endif
-}
-
 // Put this in the fragment shader if the transformation curve is not straight, if not then it goes in vertex shader
-void AdjustLightMap(in SurfaceStruct surface){
-    // Do nothing for now
+void AdjustLightMap(inout SurfaceStruct surface){
+    surface.Torch = GetLightMapTorchApprox(surface.Torch);
 }
 
 void ComputeLightmap(in SurfaceStruct Surface, inout ShadingStruct Shading){
@@ -324,8 +322,54 @@ vec3 GetScreenCoords(in vec4 fragcoord){
     return vec3(Screen, fragcoord.z);
 }
 
+// Taken from SEUS v10.1
+vec4 Cubic(float x)
+{
+    float x2 = x * x;
+    float x3 = x2 * x;
+    vec4 w;
+    w.x =   -x3 + 3*x2 - 3*x + 1;
+    w.y =  3*x3 - 6*x2       + 4;
+    w.z = -3*x3 + 3*x2 + 3*x + 1;
+    w.w =  x3;
+    return w / 6.f;
+}
+
+vec4 BicubicTexture(in sampler2D tex, in vec2 coord)
+{
+	int resolution = 64;
+
+	coord *= resolution;
+
+	float fx = fract(coord.x);
+    float fy = fract(coord.y);
+    coord.x -= fx;
+    coord.y -= fy;
+
+    vec4 xcubic = Cubic(fx);
+    vec4 ycubic = Cubic(fy);
+
+    vec4 c = vec4(coord.x - 0.5, coord.x + 1.5, coord.y - 0.5, coord.y + 1.5);
+    vec4 s = vec4(xcubic.x + xcubic.y, xcubic.z + xcubic.w, ycubic.x + ycubic.y, ycubic.z + ycubic.w);
+    vec4 offset = c + vec4(xcubic.y, xcubic.w, ycubic.y, ycubic.w) / s;
+
+    vec4 sample0 = texture2D(tex, vec2(offset.x, offset.z) / resolution);
+    vec4 sample1 = texture2D(tex, vec2(offset.y, offset.z) / resolution);
+    vec4 sample2 = texture2D(tex, vec2(offset.x, offset.w) / resolution);
+    vec4 sample3 = texture2D(tex, vec2(offset.y, offset.w) / resolution);
+
+    float sx = s.x / (s.x + s.y);
+    float sy = s.z / (s.z + s.w);
+
+    return mix( mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy);
+}
+
+vec4 SampleTextureAtlas(in vec2 coords){
+    return texture2D(texture, coords);
+}
+
 void CreateSurfaceStructForward(in vec3 fragcoord, in vec3 normal, in vec3 l, out SurfaceStruct Surface){
-    Surface.Diffuse = texture2D(texture, gl_TexCoord[0].st);
+    Surface.Diffuse = SampleTextureAtlas(gl_TexCoord[0].st);
     Surface.Normal = normal;
 
     vec2 LightMap = gl_TexCoord[1].st; 
@@ -363,5 +407,7 @@ void ComputeColor(in SurfaceStruct Surface, inout ShadingStruct Shading){
     //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st);
     //Shading.Color = vec4(vec3(Surface.NdotL), 1.0f);
 }
+
+
 
 #endif

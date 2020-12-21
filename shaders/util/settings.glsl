@@ -3,7 +3,7 @@
 
 #include "formats.glsl"
 
-const int shadowMapResolution = 2048;
+const int shadowMapResolution = 2048; // The shadow resolution [256 512 1024 2048 4096]
 const float shadowDistance = 120.0f;
 const float ShadowDistanceFadePercentage = 0.9f;
 const float ShadowDistanceFade = shadowDistance * ShadowDistanceFadePercentage;
@@ -16,26 +16,31 @@ const int colortex1Format = RGBA16;
 #define SHADOW_MAP_BIAS 0.9	
 
 const float SoftShadowScale = 0.5f / shadowMapResolution;
-#define SHADOW_SAMPLES 2.0f
+#define SHADOW_SAMPLES 2.0f // Defines how large the shadows are. [1.0f 2.0f 3.0f 4.0f]
 const float ShadowSamplesPerSide = (2*(SHADOW_SAMPLES)+1);
 const float ShadowSamplesTotal = ShadowSamplesPerSide *  ShadowSamplesPerSide;
-const float ShadowQuality = 2.0f;
-const float ShadowStep = 1.0f / ShadowQuality;
-const float ShadowQualitySamplesPerSide =  (2*(SHADOW_SAMPLES * ShadowQuality)+1);
+#define SHADOW_QUALITY 1.0f // Defines how smooth the shadows are. [1.0f 2.0f 3.0f 4.0f]
+const float ShadowStep = 1.0f / SHADOW_QUALITY;
+const float ShadowQualitySamplesPerSide =  (2*(SHADOW_SAMPLES * SHADOW_QUALITY)+1);
 const float ShadowQualityArea = ShadowQualitySamplesPerSide * ShadowQualitySamplesPerSide;
 const float ShadowArea = ShadowSamplesPerSide * ShadowSamplesPerSide;
 
 const int noiseTextureResolution = 64;
 
-//#define SOFT_SHADOW_ROTATION
-
-const bool generateShadowMipmap = true;
+const bool generateShadowMipmap = false;
 const float shadowIntervalSize 	= 4.0f;
 
-const vec3 TorchEmitColor = vec3(0.9, 0.8, 0.6);
+// Taken from KUDA 6.5.56
+const vec3 TorchEmitColor = vec3(1.0, 0.57, 0.3);;
 
 const float ShadowDepthCompressionFactor = 1.0f;
 
 const vec4 colortex5ClearColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+#define SHIFTING_RAIN_AMPLITUDE 1.5f
+#define WEATHER_DENSITY 1.0f // How fast and small weather particles (rain and snow) are [0.25f 0.5f 0.75f 1.0f 1.25f 1.5f 1.75 2.0f]
+
+const float wetnessHalfLife = 0.0001f;
+const float drynessHalfLife = 0.0001f;
 
 #endif

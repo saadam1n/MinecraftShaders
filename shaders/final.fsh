@@ -32,15 +32,14 @@ vec3 ACESFilmicTonemapping(vec3 color) {
     return clamp((color*(2.51f*color+0.03f))/(color*(2.43f*color+0.59f)+0.14f), vec3(0.0f), vec3(1.0f));
 }
 
-//#define FILMIC_TONE_MAP
+//#define DEBUG
 
 void main(){
     vec4 color = texture2D(colortex7, texcoords);
     //Apply tonemap 
-    #ifdef FILMIC_TONE_MAP
-    color.rgb = ACESFilmicTonemapping(color.rgb);
-    #else
-    color.rgb = Uncharted2ToneMapping(color.rgb);
-    #endif
+	color.rgb = ACESFilmicTonemapping(color.rgb);
+	#ifdef DEBUG
+	color = texture2D(debugTex, texcoords);
+	#endif
     gl_FragColor = color;
 }
