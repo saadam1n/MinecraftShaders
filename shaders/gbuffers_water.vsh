@@ -13,5 +13,5 @@ void main() {
     gl_TexCoord[1].st = mat2(gl_TextureMatrix[1]) * gl_MultiTexCoord1.st;
     Normal = gl_Normal;
     LightDirection = GetLightDirection();
-    CurrentSunColor = ComputeSunColor(LightDirection, LightDirection);
+    CurrentSunColor = ComputeSunColor(LightDirection, LightDirection) + ComputeSkyColor(LightDirection, LightDirection);
 }
