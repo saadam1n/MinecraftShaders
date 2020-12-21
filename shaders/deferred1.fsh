@@ -13,12 +13,7 @@ void main(){
         // Init to 0
         Color = vec4(0.0f);
         vec3 Direction = normalize(mat3(gbufferModelViewInverse) * ViewSpaceViewDir);
-        if(dot(Direction, LightDirection) > SunSpotSize){
-            Color.rgb = ComputeSunColor(LightDirection, Direction);
-        } else {
-            Color.rgb = ComputeSkyColor(LightDirection, Direction);
-        }
-
+        Color.rgb = ComputeSunColor(LightDirection, Direction) + ComputeSkyColor(LightDirection, Direction);
         Color.a = 1.0f;
     } else {
         Color = texture2D(colortex7, texcoords);

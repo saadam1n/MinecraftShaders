@@ -195,7 +195,12 @@ vec3 ComputeSkyColor(in vec3 light, in vec3 dir){
 
 vec3 saturate(vec3 val);
 
+const float SunSpotSize = 0.999;
+
 vec3 ComputeSunColor(in vec3 light, in vec3 dir){
+    if(dot(light, dir) < SunSpotSize){
+        return vec3(0.0f);
+    }
     vec3 ViewPos = vec3(0.0f, EarthRadius, 0.0f);
     float dist = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
     Ray SunRay;
@@ -206,8 +211,6 @@ vec3 ComputeSunColor(in vec3 light, in vec3 dir){
     // But gives us nice orange color without too white during the day
     return saturate(Transmittance * SunColor);
 }
-
-const float SunSpotSize = 0.999;
 
 vec4 CalculateShadow(in sampler2D ShadowDepth, in vec3 coords){ 
     return vec4(step(coords.z, texture2D(ShadowDepth, coords.xy).r));
