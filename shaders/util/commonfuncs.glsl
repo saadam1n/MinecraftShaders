@@ -146,6 +146,7 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
     OpticalDepth InscatteringOpticalDepth; 
     InscatteringOpticalDepth.Rayleigh = vec3(0.0f);
     InscatteringOpticalDepth.Mie = 0.0f;
+    vec3 ViewTransmittance = vec3(1.0f);
     for(int InscatteringStep = 0; InscatteringStep < INSCATTERING_STEPS; InscatteringStep++){
         vec3 SampleLocation = ViewPos + dir * (RayMarchPosition + 0.5f * RayMarchStepLength);
         float CurrentAltitude = distance(SampleLocation, vec3(0.0f)) - EarthRadius;
@@ -153,11 +154,12 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
         float CurrentDensityMie = CalculateDensityMie(CurrentAltitude);
         InscatteringOpticalDepth.Rayleigh += CurrenyDensityRayleigh * ExtinctionCoefficientRayleigh * RayMarchStepLength;
         InscatteringOpticalDepth.Mie += CurrenyDensityRayleigh * ExtinctionCoefficientMie * RayMarchStepLength;
+        ViewTransmittance *= Transmittance(InscatteringOpticalDepth);
         float LightLength = RaySphereIntersect(SampleLocation, light, AtmosphereRadius);
         Ray AirMassRay;
         AirMassRay.Origin = SampleLocation;
         AirMassRay.Direction = light;
-        vec3 TransmittedSunLight = ComputeTransmittance(AirMassRay, LightLength) * Transmittance(InscatteringOpticalDepth);
+        vec3 TransmittedSunLight = ComputeTransmittance(AirMassRay, LightLength) * ViewTransmittance;
         vec3 TransmittedAccumSunLight = vec3(1.0f);
         vec3 CurrentAltitudeScatteringStrengthRayleigh = CurrenyDensityRayleigh * ScatteringStrengthRayleigh;
         float CurrentAltitudeScatteringStrengthMie = CurrentDensityMie * ScatteringStrengthMie;
@@ -165,9 +167,6 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
         AccumMie      += TransmittedSunLight * TransmittedAccumSunLight * CurrentAltitudeScatteringStrengthMie      * RayMarchStepLength;
         RayMarchPosition += RayMarchStepLength;
     }
-    vec3 Opacity = Transmittance(InscatteringOpticalDepth);
-    // Multiplying the rayleigh light by 0.5f breaks the physical basis of this, but it sure does give some nice sunsets
-    // I'll find a better fix to the problem later
     return SunColor * (AccumRayleigh + AccumMie);
 }
 
