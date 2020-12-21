@@ -7,7 +7,7 @@ TODO list:
 - Add other programs - partially done
 - Specular map (labpbr)
 - Add better support for plants (subsurface scattering and waving plants)
-- Sky rendering (volumetric clouds and atmospheric scattering) - partially done
+- Sky rendering (volumetric clouds and atmospheric scattering, ozone absorption ) - partially done
 - Bloom
 - DOF 
 - SSAO
