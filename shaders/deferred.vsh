@@ -1,7 +1,8 @@
 #version 120
 
 varying vec2 texcoords;
-varying vec3 LightDirection;
+flat varying vec3 LightDirection;
+flat varying vec3 CurrentSunColor;
 
 #include "util/commonfuncs.glsl"
 
@@ -9,4 +10,5 @@ void main(){
     gl_Position = ftransform();
     gl_TexCoord[0].st = gl_MultiTexCoord0.st;
     LightDirection = GetLightDirection();
+    CurrentSunColor = ComputeSunColor(LightDirection, LightDirection);
 }

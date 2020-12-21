@@ -41,5 +41,6 @@ void main(){
 	#ifdef DEBUG
 	color = texture2D(debugTex, texcoords);
 	#endif
+	color.rgb = pow(color.rgb, vec3(1.0f / 2.2f));
     gl_FragColor = color;
 }

@@ -81,11 +81,11 @@ const float ScaleHeightRayleigh = 7.994f * KM_SIZE;
 const float ScaleHeightMie = 1.200f * KM_SIZE;
 
 float CalculateDensityRayleigh(float h){
-    return exp(-h/ScaleHeightRayleigh);
+    return exp(-h / ScaleHeightRayleigh);
 }
 
 float CalculateDensityMie(float h){
-    return exp(-h/ScaleHeightMie);
+    return exp(-h / ScaleHeightMie);
 }
 
 float PhaseRayleigh(in float cosTheta){
@@ -111,7 +111,7 @@ const vec3 ExtinctionCoefficientRayleigh = ScatteringCoefficientRayleigh + Absor
 const float ScatteringCoefficientMie = 21e-6;
 const float AbsorbtionCoefficientMie = 1.1f * ScatteringCoefficientMie;
 const float ExtinctionCoefficientMie = ScatteringCoefficientMie + AbsorbtionCoefficientMie;
-const float SunBrightness = 10.0f;
+const float SunBrightness = 20.0f;
 const vec3 SunColor = vec3(1.0f, 1.0f, 1.0f) * SunBrightness;
 
 struct OpticalDepth{
@@ -224,6 +224,8 @@ vec3 ComputeSkyColor(in vec3 light, in vec3 dir){
     #endif
 }
 
+vec3 saturate(vec3 val);
+
 vec3 ComputeSunColor(in vec3 light, in vec3 dir){
     vec3 ViewPos = vec3(0.0f, EarthRadius, 0.0f);
     float t0, t1;
@@ -232,7 +234,9 @@ vec3 ComputeSunColor(in vec3 light, in vec3 dir){
     SunRay.Origin = ViewPos;
     SunRay.Direction = dir;
     vec3 Transmittance = ComputeTransmittance(SunRay, t1);
-    return Transmittance * SunColor;
+    // The saturate breaks the physical basis of this function
+    // But gives us nice orange color without too white during the day
+    return saturate(Transmittance * SunColor);
 }
 
 const float SunSpotSize = 0.999;
@@ -490,10 +494,37 @@ float GetLightMapTorchApprox(in float lightmap) {
     return K * pow(lightmap, P) + Offset;
 }
 
+/* Desmos
+k\left(\frac{s^{p}-0.5s+o}{n}\right)^{f}
+s=\ x+0.062
+p=1.36
+o\ =\ 0.0082
+n=0.563
+f=1.2
+k=0.5
+*/
+
+
+
+float GetLightMapSky(in float sky){
+    const float NonNegative = 0.062f + 0.01f; // last term is bias
+    const float Power = 1.36f;
+    const float Offset = 0.0082f;
+    const float NormalizationFactor = 0.563f;
+    const float FractionalPower = 1.2f;
+    const float ScalingFactor = 0.5f;
+    sky += NonNegative;
+    sky = pow(sky, Power) - 0.5f * sky + Offset;
+    sky /= NormalizationFactor;
+    sky = pow(sky, FractionalPower);
+    // why does vscode give a green blue highligh to "Fract" (case senstitive)?
+    return sky * ScalingFactor;
+}
 
 // Put this in the fragment shader if the transformation curve is not straight, if not then it goes in vertex shader
 void AdjustLightMap(inout SurfaceStruct surface){
     surface.Torch = GetLightMapTorchApprox(surface.Torch);
+    surface.Sky = GetLightMapSky(surface.Sky);
 }
 
 void ComputeLightmap(in SurfaceStruct Surface, inout ShadingStruct Shading){
@@ -604,12 +635,12 @@ void CreateSurfaceStructForward(in vec3 fragcoord, in vec3 normal, in vec3 l, ou
     Surface.NdotL = dotunorm(Surface.Normal, l);
 }
 
-vec3 CalculateSunShading(in SurfaceStruct Surface){
-    return Surface.NdotL * ComputeShadow(Surface);
+vec3 CalculateSunShading(in SurfaceStruct Surface, in vec3 sun){
+    return Surface.NdotL * sun * ComputeShadow(Surface);
 }
 
-void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading){
-    Shading.Sun = CalculateSunShading(Surface);
+void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sun){
+    Shading.Sun = CalculateSunShading(Surface, sun);
     ComputeLightmap(Surface, Shading);
 }
 
