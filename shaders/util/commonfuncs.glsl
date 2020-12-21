@@ -54,12 +54,34 @@ float RaySphereIntersect(vec3 origin, vec3 dir, float radius, float max_distance
 const float ScaleHeightRayleigh = 7.994f * KM_SIZE;
 const float ScaleHeightMie = 1.200f * KM_SIZE;
 
+//#define CONSTANT_DENSITY_ATMOSPHERE //Assume that the atmosphere has a constant density, regardless of altitude for a perforamnce boost. Currently does not work properly
+
+// Use d\left(a,h\right)=\frac{1}{a}\int_{0}^{a}\exp\left(-\frac{x}{h}\right)dx in desmos
+// a = atmosphere height
+// h = scale height
+
+// Actual value for rayleigh is 0.099995460007
+// But that was too small
+const float ConstantDensityRayleigh = 0.25;
+// Actual value 0.015
+// But that was too big
+const float ConstantDensityMie = 0.005;
+
+// I should fix functions that use these instead of integration over a constant
 float CalculateDensityRayleigh(float h){
+    #ifdef CONSTANT_DENSITY_ATMOSPHERE
+    return ConstantDensityRayleigh;
+    #else
     return exp(-h / ScaleHeightRayleigh);
+    #endif
 }
 
 float CalculateDensityMie(float h){
+    #ifdef CONSTANT_DENSITY_ATMOSPHERE
+    return ConstantDensityMie;
+    #else
     return exp(-h / ScaleHeightMie);
+    #endif
 }
 
 float PhaseRayleigh(in float cosTheta){
@@ -87,6 +109,7 @@ const float AbsorbtionCoefficientMie = 1.1f * ScatteringCoefficientMie;
 const float ExtinctionCoefficientMie = ScatteringCoefficientMie + AbsorbtionCoefficientMie;
 const float SunBrightness = 20.0f;
 const vec3 SunColor = vec3(1.0f, 1.0f, 1.0f) * SunBrightness;
+const float SunColorBrightness = 0.3f;
 
 struct OpticalDepth{
     vec3 Rayleigh;

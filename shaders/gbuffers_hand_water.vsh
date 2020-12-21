@@ -14,4 +14,5 @@ void main() {
     Normal = mat3(gbufferModelViewInverse) * gl_NormalMatrix * gl_Normal;
     LightDirection = GetLightDirection();
     CurrentSunColor = ComputeSunColor(LightDirection, LightDirection) + ComputeSkyColor(LightDirection, LightDirection);
+    CurrentSunColor *= SunColorBrightness;
 }

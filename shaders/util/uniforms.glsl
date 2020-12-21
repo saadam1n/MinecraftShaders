@@ -31,7 +31,7 @@ uniform sampler2D colortex5;
 uniform sampler2D colortex6;
 uniform sampler2D colortex7;
 
-#define debugTex colortex4
+#define debugTex colortex6
 
 // Depth samplers
 uniform sampler2D depthtex0;
@@ -55,5 +55,7 @@ uniform float near;
 uniform vec3 sunPosition;
 
 uniform vec3 skyColor;
+
+uniform float screenBrightness;
 
 #endif

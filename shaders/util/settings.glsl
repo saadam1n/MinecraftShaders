@@ -11,6 +11,7 @@ const float ShadowDistanceFadeLength = shadowDistance - ShadowDistanceFade;
 const float sunPathRotation = -40.0f;
 const bool shadowHardwareFiltering = true;
 
+const int colortex0Format = RGBA16F;
 const int colortex1Format = RGBA16;
 
 #define SHADOW_MAP_BIAS 0.9	
@@ -42,5 +43,10 @@ const vec4 colortex5ClearColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 const float wetnessHalfLife = 0.0001f;
 const float drynessHalfLife = 0.0001f;
+
+#define BLOOM_THRESHOLD 0.5f
+#define BLOOM_SAMPLES 16.0f
+
+const float BloomSamplesPerSide = (2.0f * BLOOM_SAMPLES + 1.0f);
 
 #endif

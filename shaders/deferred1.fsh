@@ -19,6 +19,6 @@ void main(){
         Color = texture2D(colortex7, texcoords);
     }
     //Color.rgb = vec3(DeferredFlag);
-    /* DRAWBUFFERS:74 */
+    /* DRAWBUFFERS:7 */
     gl_FragData[0] = Color;
 }
