@@ -76,8 +76,8 @@ float PhaseMie(in float cosTheta) {
     return PhaseHenyeyGreenstein(cosTheta, -0.75f);
 }
 
-#define INSCATTERING_STEPS 64
-#define OPTICAL_DEPTH_STEPS 4
+#define INSCATTERING_STEPS 32
+#define OPTICAL_DEPTH_STEPS 8
 
 const vec3 ScatteringCoefficientRayleigh = vec3(5.5e-6, 13.0e-6, 22.4e-6);
 const vec3 AbsorbtionCoefficientRayleigh = vec3(0.0f); // Negligible 
@@ -127,6 +127,7 @@ vec3 ComputeTransmittance(Ray ray, float pointdistance) {
 }
 
 // TODO: Optimize this 
+// Also switch to trapezoidal integration
 
 vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
     //dir.y = saturate(dir.y);
