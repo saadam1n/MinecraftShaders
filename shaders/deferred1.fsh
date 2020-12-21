@@ -7,7 +7,7 @@ flat varying vec3 LightDirection;
 #include "util/commonfuncs.glsl"
 
 void main(){
-    float DeferredFlag = texture2D(colortex5, texcoords).r;
+    float DeferredFlag = texture2D(colortex2, texcoords).b;
     vec4 Color;
     if(DeferredFlag == 0.0f){ // If DeferredFlag is 0.0f it is part of the sky
         vec3 Direction = normalize(mat3(gbufferModelViewInverse) * ViewSpaceViewDir);
