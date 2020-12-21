@@ -81,10 +81,12 @@ const float ScaleHeightRayleigh = 7.994f * KM_SIZE;
 const float ScaleHeightMie = 1.200f * KM_SIZE;
 
 float CalculateDensityRayleigh(float h){
+    h = max(0.0f, h);
     return exp(-h / ScaleHeightRayleigh);
 }
 
 float CalculateDensityMie(float h){
+    h = max(0.0f, h);
     return exp(-h / ScaleHeightMie);
 }
 
@@ -102,8 +104,8 @@ float PhaseMie(in float cosTheta) {
     return PhaseHenyeyGreenstein(cosTheta, -0.75f);
 }
 
-#define INSCATTERING_STEPS 32
-#define OPTICAL_DEPTH_STEPS 32
+#define INSCATTERING_STEPS 2
+#define OPTICAL_DEPTH_STEPS 64
 
 const vec3 ScatteringCoefficientRayleigh = vec3(5.5e-6, 13.0e-6, 22.4e-6);
 const vec3 AbsorbtionCoefficientRayleigh = vec3(0.0f); // Negligible 
@@ -111,7 +113,7 @@ const vec3 ExtinctionCoefficientRayleigh = ScatteringCoefficientRayleigh + Absor
 const float ScatteringCoefficientMie = 21e-6;
 const float AbsorbtionCoefficientMie = 1.1f * ScatteringCoefficientMie;
 const float ExtinctionCoefficientMie = ScatteringCoefficientMie + AbsorbtionCoefficientMie;
-const float SunBrightness = 20.0f;
+const float SunBrightness = 5.0f;
 const vec3 SunColor = vec3(1.0f, 1.0f, 1.0f) * SunBrightness;
 
 struct OpticalDepth{
@@ -135,7 +137,6 @@ OpticalDepth ComputeOpticalDepth(Ray AirMassRay, float pointdistance) {
         float Height = distance(SampleLocation, vec3(0.0f)) - EarthRadius;
         AirMass.Rayleigh += CalculateDensityRayleigh(Height);
         AirMass.Mie      += CalculateDensityMie(Height);
-
         RayMarchPosition += RayMarchStepLength;
     }
     AirMass.Rayleigh *= ExtinctionCoefficientRayleigh * RayMarchStepLength;
@@ -146,7 +147,7 @@ OpticalDepth ComputeOpticalDepth(Ray AirMassRay, float pointdistance) {
 vec3 Transmittance(in OpticalDepth AirMass){
     vec3 TotalOpticalDepth = AirMass.Rayleigh + AirMass.Mie;
     //gl_FragData[1].rgb = exp(-TotalOpticalDepth);
-    return exp(-TotalOpticalDepth * 2);
+    return exp(-TotalOpticalDepth);
 }
 
 vec3 ComputeTransmittance(Ray ray, float pointdistance) {
@@ -208,20 +209,8 @@ vec3 ComputeFog(in vec3 light, in vec3 dir, in vec3 color, in float dist){
     return foggyclr;
 }
 
-// TODO: Fill this function out
-vec3 ComputeSkyGradient(in vec3 light, in vec3 dir){
-    vec3 Top = skyColor;
-    return ComputeFog(light, dir, Top, 1.0f);
-}
-
-#define ATMOSPHERIC_SCATTERING // Use a physically based model to render the atmosphere
-
 vec3 ComputeSkyColor(in vec3 light, in vec3 dir){
-    #ifdef ATMOSPHERIC_SCATTERING
     return ComputeAtmosphericScattering(light, dir);
-    #else
-    return ComputeSkyGradient(light, dir);
-    #endif
 }
 
 vec3 saturate(vec3 val);
