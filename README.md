@@ -18,4 +18,6 @@ TODO list:
 - Translucent items do not have proper forward rendering when dropped
 - Shadows of translucent items do not appear when held in the players hand
 - Shadow acne at the bottom of the shadow map due to shadow distortion
-- Volumetric lighting looks horrible
+- Volumetric lighting has an unintended cloud layer above the player
+- VL also is barely visible in small scenes and maybe a bit too much in large scenes
+- There is no fog for parts of the world behind the player due to the forward mie scattering that takes place in VL
