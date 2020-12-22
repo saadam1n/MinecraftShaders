@@ -1,7 +1,8 @@
 #ifndef COMMON_FUNCS_GLSL
 #define COMMON_FUNCS_GLSL 1
 
-#define MATH_PI 3.1415
+#define MATH_PI 3.14159265359
+#define MATH_E 2.71828182846
 
 #include "uniforms.glsl"
 #include "structures.glsl"
@@ -54,8 +55,7 @@ float RaySphereIntersect(vec3 origin, vec3 dir, float radius, float max_distance
 const float ScaleHeightRayleigh = 7.994f * KM_SIZE;
 const float ScaleHeightMie = 1.200f * KM_SIZE;
 
-//#define CONSTANT_DENSITY_ATMOSPHERE //Assume that the atmosphere has a constant density, regardless of altitude for a perforamnce boost. Currently does not work properly
-
+// Constant density altitude
 // Use d\left(a,h\right)=\frac{1}{a}\int_{0}^{a}\exp\left(-\frac{x}{h}\right)dx in desmos
 // a = atmosphere height
 // h = scale height
@@ -69,19 +69,40 @@ const float ConstantDensityMie = 0.005;
 
 // I should fix functions that use these instead of integration over a constant
 float CalculateDensityRayleigh(float h){
-    #ifdef CONSTANT_DENSITY_ATMOSPHERE
-    return ConstantDensityRayleigh;
-    #else
     return exp(-h / ScaleHeightRayleigh);
-    #endif
 }
 
 float CalculateDensityMie(float h){
-    #ifdef CONSTANT_DENSITY_ATMOSPHERE
-    return ConstantDensityMie;
-    #else
     return exp(-h / ScaleHeightMie);
+}
+
+float CalculateDensityOzone(float h){
+    return exp(-h / ScaleHeightMie);
+}
+
+#define OZONE_ABSORPTION // Model ozone absorption when rendering the atmosphere
+
+// Ozone function:
+// 0.07\left(\frac{1}{1+\left(x-29.874\right)^{2}}\right)^{0.7}
+// Based of an approximation of https://www.shadertoy.com/view/wlBXWK 
+// Original function:
+// c\left(x\right)=\max\left(\min\left(x,\ 1\right),0\right) this is clamp()
+// c\left(\frac{1.0}{\frac{\cosh\left(30-x\right)}{3}}\cdot\exp\left(-\frac{x}{7.994}\right)\right)
+// x in both functions is in kilometers
+// I'd galdy appreciate if someone finds the correct function or a more accurate function
+vec3 CalculateAtmosphericDensity(float height){
+    vec3 Density;
+    Density.xy = exp(-height / vec2(ScaleHeightRayleigh, ScaleHeightMie));
+    #ifdef OZONE_ABSORPTION
+    float x = height / KM_SIZE; // The function squares x, and x is supposed to be in km
+    x  = x - 29.874f;
+    x *= x;
+    x  = 1.0f / (1.0f + x);
+    x  = pow(x, 0.7);
+    x *= 0.07f;
+    Density.z = x;
     #endif
+    return Density;
 }
 
 float PhaseRayleigh(in float cosTheta){
@@ -101,48 +122,56 @@ float PhaseMie(in float cosTheta) {
 #define INSCATTERING_STEPS 32
 #define OPTICAL_DEPTH_STEPS 8
 
-const vec3 ScatteringCoefficientRayleigh = vec3(5.5e-6, 13.0e-6, 22.4e-6);
-const vec3 AbsorbtionCoefficientRayleigh = vec3(0.0f); // Negligible 
-const vec3 ExtinctionCoefficientRayleigh = ScatteringCoefficientRayleigh + AbsorbtionCoefficientRayleigh;
-const float ScatteringCoefficientMie = 21e-6;
-const float AbsorbtionCoefficientMie = 1.1f * ScatteringCoefficientMie;
-const float ExtinctionCoefficientMie = ScatteringCoefficientMie + AbsorbtionCoefficientMie;
+const vec3 ScatteringRayleigh = vec3(5.5e-6, 13.0e-6, 22.4e-6);
+const vec3 AbsorptionRayleigh = vec3(0.0f); // Negligible 
+const vec3 ExtinctionRayleigh = ScatteringRayleigh + AbsorptionRayleigh;
+const float ScatteringMie = 21e-6;
+const float AbsorptionMie = 1.1f * ScatteringMie;
+const float ExtinctionMie = ScatteringMie + AbsorptionMie;
+const vec3 ScatteringOzone = vec3(0.0f); // Ozone does not scatter light
+const vec3 AbsorptionOzone = vec3(2.04e-5, 4.97e-5, 1.95e-6);
+const vec3 ExtinctionOzone = ScatteringOzone + AbsorptionOzone;
 const float SunBrightness = 20.0f;
 const vec3 SunColor = vec3(1.0f, 1.0f, 1.0f) * SunBrightness;
 const float SunColorBrightness = 0.3f;
-
-struct OpticalDepth{
-    vec3 Rayleigh;
-    float Mie;
-};
 
 struct Ray {
     vec3 Origin;
     vec3 Direction;
 };
 
-OpticalDepth ComputeOpticalDepth(Ray AirMassRay, float pointdistance) {
-    OpticalDepth AirMass;
-    AirMass.Rayleigh = vec3(0.0f);
-    AirMass.Mie = 0.0f;
+// Optical depth:
+// x - rayleigh
+// y - mie
+// z - ozone
+
+vec3 ComputeOpticalDepth(Ray AirMassRay, float pointdistance) {
+    vec3 OpticalDepth = vec3(0.0f);
     float RayMarchStepLength = pointdistance / float(OPTICAL_DEPTH_STEPS);
     float RayMarchPosition = 0.0f;
     for(int Step = 0; Step < OPTICAL_DEPTH_STEPS; Step++){
         vec3 SampleLocation = AirMassRay.Origin + AirMassRay.Direction * (RayMarchPosition + 0.5f * RayMarchStepLength);
         float Height = distance(SampleLocation, vec3(0.0f)) - EarthRadius;
-        AirMass.Rayleigh += CalculateDensityRayleigh(Height);
-        AirMass.Mie      += CalculateDensityMie(Height);
+        OpticalDepth += CalculateAtmosphericDensity(Height);
         RayMarchPosition += RayMarchStepLength;
     }
-    AirMass.Rayleigh *= ExtinctionCoefficientRayleigh * RayMarchStepLength;
-    AirMass.Mie      *= ExtinctionCoefficientMie      * RayMarchStepLength;
-    return AirMass;
+    OpticalDepth *= RayMarchStepLength;
+    return OpticalDepth;
 }
 
-vec3 Transmittance(in OpticalDepth AirMass){
-    vec3 TotalOpticalDepth = AirMass.Rayleigh + AirMass.Mie;
+vec3 Transmittance(in vec3 OpticalDepth){
+    #ifdef OZONE_ABSORPTION
+    vec3 Tau = 
+        OpticalDepth.x * ExtinctionRayleigh +
+        OpticalDepth.y * ExtinctionMie +
+        OpticalDepth.z * ExtinctionOzone;
+    #else
+    vec3 Tau = 
+        OpticalDepth.x * ExtinctionRayleigh +
+        OpticalDepth.y * ExtinctionMie;
+    #endif
     //gl_FragData[1].rgb = exp(-TotalOpticalDepth);
-    return exp(-TotalOpticalDepth);
+    return exp(-Tau);
 }
 
 vec3 ComputeTransmittance(Ray ray, float pointdistance) {
@@ -152,40 +181,33 @@ vec3 ComputeTransmittance(Ray ray, float pointdistance) {
 // TODO: Optimize this 
 // Also switch to trapezoidal integration
 
-vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
-    //dir.y = saturate(dir.y);
-    //dir = normalize(dir);
-    float t0;
+vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir) {
     vec3 ViewPos = vec3(0.0f, EarthRadius, 0.0f);
     float AtmosphereDistance = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
     vec3 AtmosphereIntersectionLocation = ViewPos + dir * AtmosphereDistance;
     vec3 AccumRayleigh = vec3(0.0f), AccumMie = vec3(0.0f);
     // TODO: precompute cos theta^2 for both functions
     float CosTheta = dot(light, dir);
-    vec3 ScatteringStrengthRayleigh = PhaseRayleigh(CosTheta) * ScatteringCoefficientRayleigh;
-    float ScatteringStrengthMie = PhaseMie(CosTheta) * ScatteringCoefficientMie;
+    vec3 ScatteringStrengthRayleigh = PhaseRayleigh(CosTheta) * ScatteringRayleigh;
+    float ScatteringStrengthMie = PhaseMie(CosTheta) * ScatteringMie;
     float RayMarchStepLength = AtmosphereDistance / float(INSCATTERING_STEPS);
     float RayMarchPosition = 0.0f;
-    OpticalDepth InscatteringOpticalDepth; 
-    InscatteringOpticalDepth.Rayleigh = vec3(0.0f);
-    InscatteringOpticalDepth.Mie = 0.0f;
+    vec3 ViewOpticalDepth = vec3(0.0f); 
     vec3 ViewTransmittance = vec3(1.0f);
     for(int InscatteringStep = 0; InscatteringStep < INSCATTERING_STEPS; InscatteringStep++){
         vec3 SampleLocation = ViewPos + dir * (RayMarchPosition + 0.5f * RayMarchStepLength);
         float CurrentAltitude = distance(SampleLocation, vec3(0.0f)) - EarthRadius;
-        float CurrenyDensityRayleigh = CalculateDensityRayleigh(CurrentAltitude);
-        float CurrentDensityMie = CalculateDensityMie(CurrentAltitude);
-        InscatteringOpticalDepth.Rayleigh += CurrenyDensityRayleigh * ExtinctionCoefficientRayleigh * RayMarchStepLength;
-        InscatteringOpticalDepth.Mie += CurrenyDensityRayleigh * ExtinctionCoefficientMie * RayMarchStepLength;
-        ViewTransmittance *= Transmittance(InscatteringOpticalDepth);
+        vec3 CurrentDensity = CalculateAtmosphericDensity(CurrentAltitude);
+        ViewOpticalDepth += CurrentDensity * RayMarchStepLength;
+        ViewTransmittance *= Transmittance(ViewOpticalDepth);
         float LightLength = RaySphereIntersect(SampleLocation, light, AtmosphereRadius);
-        Ray AirMassRay;
-        AirMassRay.Origin = SampleLocation;
-        AirMassRay.Direction = light;
-        vec3 TransmittedSunLight = ComputeTransmittance(AirMassRay, LightLength) * ViewTransmittance;
+        Ray LightRay;
+        LightRay.Origin = SampleLocation;
+        LightRay.Direction = light;
+        vec3 TransmittedSunLight = ComputeTransmittance(LightRay, LightLength) * ViewTransmittance;
         vec3 TransmittedAccumSunLight = vec3(1.0f);
-        vec3 CurrentAltitudeScatteringStrengthRayleigh = CurrenyDensityRayleigh * ScatteringStrengthRayleigh;
-        float CurrentAltitudeScatteringStrengthMie = CurrentDensityMie * ScatteringStrengthMie;
+        vec3 CurrentAltitudeScatteringStrengthRayleigh = CurrentDensity.x * ScatteringStrengthRayleigh;
+        float CurrentAltitudeScatteringStrengthMie     = CurrentDensity.y * ScatteringStrengthMie;
         AccumRayleigh += TransmittedSunLight * TransmittedAccumSunLight * CurrentAltitudeScatteringStrengthRayleigh * RayMarchStepLength;
         AccumMie      += TransmittedSunLight * TransmittedAccumSunLight * CurrentAltitudeScatteringStrengthMie      * RayMarchStepLength;
         RayMarchPosition += RayMarchStepLength;
