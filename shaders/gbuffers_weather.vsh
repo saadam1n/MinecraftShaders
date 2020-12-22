@@ -36,11 +36,24 @@ vec4 ShiftingRain(void){
     return glPos;
 }
 
+// Taken from Kuda 6.5.56
+vec4 ShiftedRainKUDA6556(void){
+    vec4 glPos = gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex;
+    glPos.xyz += cameraPosition;
+    bool isTop = glPos.y > cameraPosition.y + 5.0f;
+    if (!isTop) {
+        glPos.xz += vec2(1.0, 0.0);
+    }
+    glPos.xyz -= cameraPosition;
+    glPos = gl_ProjectionMatrix * gbufferModelView * glPos;
+    return glPos;
+}
+
 void main(){
     
     gl_Position = 
     #if (SHIFTING_RAIN_STYLE == 0)
-    ftransform();
+    ShiftedRainKUDA6556();
     #endif
     #if (SHIFTING_RAIN_STYLE == 1)
     ShiftingRain();

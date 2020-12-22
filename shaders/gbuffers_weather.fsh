@@ -9,9 +9,13 @@ float LumaAdjust(vec3 color) {
 	return dot(color, vec3(0.3333));
 }
 
+#define LUMA_ADJUSTED_RAIN
+
 void main(){
     vec4 color = texture2D(texture, gl_TexCoord[0].st) * gl_Color;
+    #ifdef LUMA_ADJUSTED_RAIN
     color.rgb = vec3(LumaAdjust(color.rgb));
+    #endif
     /* DRAWBUFFERS:012 */
     gl_FragData[0] = color;
     gl_FragData[1] = vec4(Normal * 0.5f + 0.5f, 0.0f);

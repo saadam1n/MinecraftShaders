@@ -193,25 +193,6 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
     return SunColor * (AccumRayleigh + AccumMie);
 }
 
-const vec3 FogScattering = vec3(2.0e-2);
-const vec3 FogAbsorbtion = vec3(1.5e-3);
-const vec3 FogExtinction = FogScattering + FogAbsorbtion;
-
-// Basic idea behind this is that there is some sort of fog cover over the player's head
-// We blend with skyColor based of how high the viewing direction is and how far it is
-// Then inscattering is computed using a mie phase approximationg using dot and pow
-// It is going to be quite similair to Slidures v1.06
-vec3 ComputeFog(in vec3 light, in vec3 dir, in vec3 color, in float dist){
-    float vertical = max(dir.y, 0.0f);
-    //vertical = pow(vertical, 0.1f);
-    vertical = max(vertical, 0.01f);
-    vec3 extinction = exp(-FogExtinction * dist);
-    vec3 inscattering = exp(FogScattering * dist);
-    inscattering = mix(inscattering, FogScattering * max(dot(light, dir), 0.0f) * vec3(12.0f, 5.0f, 1.0f) * dist, 1.0f);
-    vec3 foggyclr = mix(mix(color * extinction + inscattering, inscattering, pow(max(dot(light, dir), 0.0f), 2.0f)), color, vertical);
-    return foggyclr;
-}
-
 vec3 ComputeSkyColor(in vec3 light, in vec3 dir){
     return ComputeAtmosphericScattering(light, dir);
 }
@@ -638,11 +619,27 @@ void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, i
     ComputeLightmap(Surface, Shading);
 }
 
+const vec3 FogScattering = vec3(2.0e-9);
+const vec3 FogAbsorbtion = vec3(1.5e-3);
+const vec3 FogExtinction = FogAbsorbtion;
+
+vec3 ComputeFog(in vec3 light, in vec3 dir, in vec3 color, in float dist){
+    vec3 transmittedColor = color * exp(-FogExtinction * dist);
+    vec3 inscatteredColor = fogColor * exp(-FogScattering * dist);
+    return transmittedColor + inscatteredColor;
+}
+
 void ComputeColor(in SurfaceStruct Surface, inout ShadingStruct Shading){
     vec3 Lighting = Shading.Sun + Shading.Torch + Shading.Sky;
     Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f);
+    //Shading.Color.rgb = ComputeFog(vec3(0.0f), vec3(0.0f), Shading.Color.rgb, 100);
     //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st);
     //Shading.Color = vec4(vec3(Surface.NdotL), 1.0f);
+}
+
+float Guassian(in float sigma, in float x){
+    float sigma2_2 = 2.0f * sigma * sigma;
+    return (1.0f / sqrt(MATH_PI * sigma2_2)) * exp(x * x / sigma2_2);
 }
 
 #endif

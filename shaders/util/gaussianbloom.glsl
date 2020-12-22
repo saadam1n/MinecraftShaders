@@ -12,9 +12,8 @@ void main() {
         vec2 Offset = vec2(0.0f, sample / viewHeight);
         #endif
         vec2 Sample = gl_TexCoord[0].st + Offset;
-        Accum += texture2D(colortex0, Sample).rgb;
+        Accum += texture2D(colortex0, Sample).rgb * Guassian(BloomStandardDeviation, sample);
     }
-    Accum /= BloomSamplesPerSide;
     /* DRAWBUFFERS:0 */
     gl_FragData[0] = vec4(Accum, 1.0f);
 }

@@ -55,6 +55,7 @@ uniform float near;
 uniform vec3 sunPosition;
 
 uniform vec3 skyColor;
+uniform vec3 fogColor;
 
 uniform float screenBrightness;
 
