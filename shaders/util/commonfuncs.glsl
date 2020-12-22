@@ -181,7 +181,7 @@ vec3 ComputeTransmittance(Ray ray, float pointdistance) {
 // TODO: Optimize this 
 // Also switch to trapezoidal integration
 
-vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir) {
+vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 viewtransmittance) {
     vec3 ViewPos = vec3(0.0f, EarthRadius, 0.0f);
     float AtmosphereDistance = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
     vec3 AtmosphereIntersectionLocation = ViewPos + dir * AtmosphereDistance;
@@ -212,7 +212,13 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir) {
         AccumMie      += TransmittedSunLight * TransmittedAccumSunLight * CurrentAltitudeScatteringStrengthMie      * RayMarchStepLength;
         RayMarchPosition += RayMarchStepLength;
     }
+    viewtransmittance = ViewTransmittance;
     return SunColor * (AccumRayleigh + AccumMie);
+}
+
+vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
+    vec3 temp;
+    return ComputeAtmosphericScattering(light, dir, temp);
 }
 
 vec3 ComputeSkyColor(in vec3 light, in vec3 dir){
@@ -233,6 +239,16 @@ vec3 ComputeSunColor(in vec3 light, in vec3 dir){
     SunRay.Origin = ViewPos;
     SunRay.Direction = dir;
     vec3 Transmittance = ComputeTransmittance(SunRay, dist);
+    // The saturate breaks the physical basis of this function
+    // But gives us nice orange color without too white during the day
+    return saturate(Transmittance * SunColor);
+}
+
+vec3 ComputeSunColor(in vec3 light, in vec3 dir, in vec3 opticaldepth){
+    if(dot(light, dir) < SunSpotSize){
+        return vec3(0.0f);
+    }
+    vec3 Transmittance = Transmittance(opticaldepth);
     // The saturate breaks the physical basis of this function
     // But gives us nice orange color without too white during the day
     return saturate(Transmittance * SunColor);

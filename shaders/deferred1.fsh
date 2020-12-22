@@ -13,7 +13,9 @@ void main(){
         // Init to 0
         Color = vec4(0.0f);
         vec3 Direction = normalize(mat3(gbufferModelViewInverse) * ViewSpaceViewDir);
-        Color.rgb = ComputeSunColor(LightDirection, Direction) + ComputeSkyColor(LightDirection, Direction);
+        vec3 OpticalDepth;
+        Color.rgb += ComputeAtmosphericScattering(LightDirection, Direction, OpticalDepth);
+        Color.rgb += ComputeSunColor(LightDirection, Direction, OpticalDepth);
         Color.a = 1.0f;
     } else {
         Color = texture2D(colortex7, texcoords);
