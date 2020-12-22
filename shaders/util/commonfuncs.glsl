@@ -80,8 +80,6 @@ float CalculateDensityOzone(float h){
     return exp(-h / ScaleHeightMie);
 }
 
-#define OZONE_ABSORPTION // Model ozone absorption when rendering the atmosphere
-
 // Ozone function:
 // 0.07\left(\frac{1}{1+\left(x-29.874\right)^{2}}\right)^{0.7}
 // Based of an approximation of https://www.shadertoy.com/view/wlBXWK 
@@ -93,7 +91,6 @@ float CalculateDensityOzone(float h){
 vec3 CalculateAtmosphericDensity(float height){
     vec3 Density;
     Density.xy = exp(-height / vec2(ScaleHeightRayleigh, ScaleHeightMie));
-    #ifdef OZONE_ABSORPTION
     float x = height / KM_SIZE; // The function squares x, and x is supposed to be in km
     x  = x - 29.874f;
     x *= x;
@@ -101,7 +98,6 @@ vec3 CalculateAtmosphericDensity(float height){
     x  = pow(x, 0.7);
     x *= 0.07f;
     Density.z = x;
-    #endif
     return Density;
 }
 
@@ -119,8 +115,13 @@ float PhaseMie(in float cosTheta) {
     return PhaseHenyeyGreenstein(cosTheta, -0.75f);
 }
 
-#define INSCATTERING_STEPS 32
-#define OPTICAL_DEPTH_STEPS 8
+float PhaseRayleigh(in vec3 v, in vec3 l){
+    return PhaseRayleigh(dot(v, l));
+}
+
+float PhaseMie(in vec3 v, in vec3 l){
+    return PhaseMie(dot(v, l));
+}
 
 const vec3 ScatteringRayleigh = vec3(5.5e-6, 13.0e-6, 22.4e-6);
 const vec3 AbsorptionRayleigh = vec3(0.0f); // Negligible 
@@ -134,6 +135,12 @@ const vec3 ExtinctionOzone = ScatteringOzone + AbsorptionOzone;
 const float SunBrightness = 20.0f;
 const vec3 SunColor = vec3(1.0f, 1.0f, 1.0f) * SunBrightness;
 const float SunColorBrightness = 0.3f;
+
+// Thes values were the best all rounder for both performance and quality
+// I will add a slider for both of these (if I knew how) so users with better computers can get the sky the can acheive
+#define INSCATTERING_STEPS 8
+#define OPTICAL_DEPTH_STEPS 2
+
 
 struct Ray {
     vec3 Origin;
@@ -160,16 +167,10 @@ vec3 ComputeOpticalDepth(Ray AirMassRay, float pointdistance) {
 }
 
 vec3 Transmittance(in vec3 OpticalDepth){
-    #ifdef OZONE_ABSORPTION
     vec3 Tau = 
         OpticalDepth.x * ExtinctionRayleigh +
         OpticalDepth.y * ExtinctionMie +
         OpticalDepth.z * ExtinctionOzone;
-    #else
-    vec3 Tau = 
-        OpticalDepth.x * ExtinctionRayleigh +
-        OpticalDepth.y * ExtinctionMie;
-    #endif
     //gl_FragData[1].rgb = exp(-TotalOpticalDepth);
     return exp(-Tau);
 }
@@ -221,13 +222,65 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
     return ComputeAtmosphericScattering(light, dir, temp);
 }
 
-vec3 ComputeSkyColor(in vec3 light, in vec3 dir){
-    return ComputeAtmosphericScattering(light, dir);
+// https://www.shadertoy.com/view/llffzM 
+const vec3 SkyColor = vec3(0.39, 0.57, 1.0);
+
+// https://www.shadertoy.com/view/Ml2cWG 
+const float Density = 1.0f;
+float ZenithDensity(float dir_y){
+    return Density / pow(max(dir_y + 0.1f, 0.35e-2), 0.75);
 }
+
+// params: Scattering coefficent, optical depth
+vec3 CalculateAbsorption(in vec3 scatter, in float od){
+    return exp(-od * scatter);
+}
+
+// This is my gift to all you iGPU users out there
+// You guys still get an amazing sky
+// Most of this is based of https://www.shadertoy.com/view/Ml2cWG
+// I'll try later to make one completely on my own
+vec3 ComputeInaccurateAtmosphere(in vec3 light, in vec3 dir, out vec3 sun) {
+    vec3 ViewPos = vec3(0.0f, EarthRadius, 0.0f);
+    vec3 ViewAbsorption = CalculateAbsorption(SkyColor, ZenithDensity(dir.y));
+    vec3 SunAbsorption = CalculateAbsorption(SkyColor, ZenithDensity(light.y));
+    float cosTheta = dot(light, dir);
+    float cosTheta_unorm = cosTheta * 0.5f + 0.5f;
+    vec3 Rayleigh = ViewAbsorption * SkyColor * mix(pow(cosTheta_unorm, 0.2f), 1.0f, light.y);
+    vec3 Mie = 0.2f * pow(cosTheta_unorm, 200.0f) * SunAbsorption;
+    vec3 CalculatedSkyColor = Rayleigh + Mie;
+    sun = SunAbsorption;
+    return CalculatedSkyColor;
+}
+
+
+const float SunSpotSize = 0.999;
+
+vec3 ComputeInaccurateSun(in vec3 light, in vec3 dir, in vec3 absorption) {
+    if(dot(light, dir) < SunSpotSize){
+        return vec3(0.0f);
+    }
+    return vec3(5.0f) * absorption;
+}
+
+#define PHYSICALLY_BASED_ATMOSPHERE // Use a physically based model for rendering the atmosphere
+
+vec3 ComputeAtmosphereColor(in vec3 light, in vec3 dir, out vec3 aux){
+    #ifdef PHYSICALLY_BASED_ATMOSPHERE
+    return ComputeAtmosphericScattering(light, dir, aux);
+    #else
+    return ComputeInaccurateAtmosphere(light, dir, aux);
+    #endif
+}
+
+vec3 ComputeAtmosphereColor(in vec3 light, in vec3 dir){
+    vec3 temp;
+    return ComputeAtmosphereColor(light, dir, temp);
+}
+
 
 vec3 saturate(vec3 val);
 
-const float SunSpotSize = 0.999;
 
 vec3 ComputeSunColor(in vec3 light, in vec3 dir){
     if(dot(light, dir) < SunSpotSize){
@@ -678,7 +731,7 @@ void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct 
     // TODO: fix that issue listed above
     VolumetricLightingAccum /= VOLUMETRIC_LIGHTING_STEPS;
     // TODO: multiply it by a good phase function for VL (not mie, that just made it look worse)
-    Shading.Volumetric = VolumetricLightingAccum * pow(dot(StepDirection, sundir) * 0.5f + 0.5f, 4.0f);
+    Shading.Volumetric = VolumetricLightingAccum;
 }
 
 void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 suncol){
@@ -700,7 +753,7 @@ vec3 ComputeFog(in vec3 light, in vec3 dir, in vec3 color, in float dist){
 
 void ComputeColor(in SurfaceStruct Surface, inout ShadingStruct Shading){
     vec3 Lighting = Shading.Sun + Shading.Torch + Shading.Sky;
-    Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f) + vec4(Shading.Volumetric, 0.0f);
+    Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f);// + vec4(Shading.Volumetric, 0.0f);
     //Shading.Color.rgb = ComputeFog(vec3(0.0f), vec3(0.0f), Shading.Color.rgb, 100);
     //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st);
     //Shading.Color = vec4(vec3(Surface.NdotL), 1.0f);
