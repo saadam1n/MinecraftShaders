@@ -50,4 +50,6 @@ const float drynessHalfLife = 0.0001f;
 const float BloomSamplesPerSide = (2.0f * BLOOM_SAMPLES + 1.0f);
 const float BloomStandardDeviation = BloomSamplesPerSide - 10.0f;
 
+#define VOLUMETRIC_LIGHTING_STEPS 32.0f
+
 #endif

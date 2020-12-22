@@ -12,7 +12,7 @@ void main(){
     SurfaceStruct Surface;
     ShadingStruct Shading;
     CreateSurfaceStructDeferred(gl_TexCoord[0].st, LightDirection, Surface);
-    ShadeSurfaceStruct(Surface, Shading, CurrentSunColor); 
+    ShadeSurfaceStruct(Surface, Shading, LightDirection, CurrentSunColor); 
     ComputeColor(Surface, Shading);
     /* DRAWBUFFERS:7 */
     gl_FragData[0] = Shading.Color;

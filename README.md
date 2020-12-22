@@ -18,3 +18,4 @@ TODO list:
 - Translucent items do not have proper forward rendering when dropped
 - Shadows of translucent items do not appear when held in the players hand
 - Shadow acne at the bottom of the shadow map due to shadow distortion
+- Volumetric lighting looks horrible

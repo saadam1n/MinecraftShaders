@@ -10,7 +10,7 @@ void main () {
     SurfaceStruct Surface;
     ShadingStruct Shading;
     CreateSurfaceStructForward(GetScreenCoords(gl_FragCoord), Normal, LightDirection, Surface);
-    ShadeSurfaceStruct(Surface, Shading, CurrentSunColor); 
+    ShadeSurfaceStruct(Surface, Shading, LightDirection, CurrentSunColor); 
     ComputeColor(Surface, Shading);
     //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st).rgb;
     /* DRAWBUFFERS:7 */

@@ -28,6 +28,7 @@ struct ShadingStruct {
     vec3 Sun;
     vec3 Torch;
     vec3 Sky;
+    vec3 Volumetric;
 };
 
 #endif

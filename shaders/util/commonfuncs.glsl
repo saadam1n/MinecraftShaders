@@ -652,9 +652,38 @@ vec3 CalculateSunShading(in SurfaceStruct Surface, in vec3 sun){
     return Surface.NdotL * sun * ComputeShadow(Surface);
 }
 
-void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sun){
-    Shading.Sun = CalculateSunShading(Surface, sun);
+// Should be flat varying from vert shader
+// But I'm lazy
+vec3 GetEyePositionShadow(void){
+    vec4 eye = shadowProjection * shadowModelView * gbufferModelViewInverse * vec4(vec3(0.0f), 1.0f);
+    return eye.xyz;
+}
+
+// Computes in shadow clip space
+void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 eyePos = GetEyePositionShadow()){
+    vec3 toEye = eyePos - Surface.ShadowClip;
+    vec3 StepSize = (toEye) / VOLUMETRIC_LIGHTING_STEPS;
+    vec3 StepDirection = normalize(StepSize);
+    float StepLength = length(StepSize);
+    vec3 VolumetricLightingAccum = vec3(0.0f);
+    for(float Step = 0.0f; Step < VOLUMETRIC_LIGHTING_STEPS; Step++){
+        vec3 SamplePosition = Surface.ShadowClip + StepSize * Step;
+        SamplePosition = DistortShadow(SamplePosition) * 0.5f + 0.5f;
+        VolumetricLightingAccum += ComputeVisibility(SamplePosition) * 0.5f;
+    }
+    // Not exactly physically based, but makes VL look good up close
+    // Only issue is when you walk towards an object in the sun
+    // TODO: fix that issue listed above
+    VolumetricLightingAccum /= VOLUMETRIC_LIGHTING_STEPS;
+    // TODO: multiply it by a good phase function for VL (not mie, that just made it look worse)
+    Shading.Volumetric = VolumetricLightingAccum;
+}
+
+void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 suncol){
+    Shading.Sun = CalculateSunShading(Surface, suncol);
     ComputeLightmap(Surface, Shading);
+    ComputeVolumetricLighting(Surface, Shading, sundir);
+    Shading.Volumetric *= suncol;
 }
 
 const vec3 FogScattering = vec3(2.0e-9);
@@ -669,7 +698,7 @@ vec3 ComputeFog(in vec3 light, in vec3 dir, in vec3 color, in float dist){
 
 void ComputeColor(in SurfaceStruct Surface, inout ShadingStruct Shading){
     vec3 Lighting = Shading.Sun + Shading.Torch + Shading.Sky;
-    Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f);
+    Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f) + vec4(Shading.Volumetric, 0.0f);
     //Shading.Color.rgb = ComputeFog(vec3(0.0f), vec3(0.0f), Shading.Color.rgb, 100);
     //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st);
     //Shading.Color = vec4(vec3(Surface.NdotL), 1.0f);
