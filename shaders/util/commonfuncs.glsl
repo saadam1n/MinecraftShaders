@@ -659,6 +659,8 @@ vec3 GetEyePositionShadow(void){
     return eye.xyz;
 }
 
+const float VolumetricLightingScattering = 0.2f;
+
 // Computes in shadow clip space
 void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 eyePos = GetEyePositionShadow()){
     vec3 toEye = eyePos - Surface.ShadowClip;
@@ -669,14 +671,14 @@ void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct 
     for(float Step = 0.0f; Step < VOLUMETRIC_LIGHTING_STEPS; Step++){
         vec3 SamplePosition = Surface.ShadowClip + StepSize * Step;
         SamplePosition = DistortShadow(SamplePosition) * 0.5f + 0.5f;
-        VolumetricLightingAccum += ComputeVisibility(SamplePosition) * 0.5f;
+        VolumetricLightingAccum += ComputeVisibility(SamplePosition) * VolumetricLightingScattering;
     }
     // Not exactly physically based, but makes VL look good up close
     // Only issue is when you walk towards an object in the sun
     // TODO: fix that issue listed above
     VolumetricLightingAccum /= VOLUMETRIC_LIGHTING_STEPS;
     // TODO: multiply it by a good phase function for VL (not mie, that just made it look worse)
-    Shading.Volumetric = VolumetricLightingAccum;
+    Shading.Volumetric = VolumetricLightingAccum * pow(dot(StepDirection, sundir) * 0.5f + 0.5f, 4.0f);
 }
 
 void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 suncol){
