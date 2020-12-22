@@ -242,11 +242,13 @@ vec3 CalculateAbsorption(in vec3 scatter, in float od){
 // I'll try later to make one completely on my own
 vec3 ComputeInaccurateAtmosphere(in vec3 light, in vec3 dir, out vec3 sun) {
     vec3 ViewPos = vec3(0.0f, EarthRadius, 0.0f);
-    vec3 ViewAbsorption = CalculateAbsorption(SkyColor, ZenithDensity(dir.y));
-    vec3 SunAbsorption = CalculateAbsorption(SkyColor, ZenithDensity(light.y));
+    float ViewDensity = ZenithDensity(dir.y);
+    float SunDensity = ZenithDensity(light.y);
+    vec3 ViewAbsorption = CalculateAbsorption(SkyColor, ViewDensity);
+    vec3 SunAbsorption = CalculateAbsorption(SkyColor, SunDensity);
     float cosTheta = dot(light, dir);
     float cosTheta_unorm = cosTheta * 0.5f + 0.5f;
-    vec3 Rayleigh = ViewAbsorption * SkyColor * mix(pow(cosTheta_unorm, 0.2f), 1.0f, light.y);
+    vec3 Rayleigh = ViewDensity * ViewAbsorption * SkyColor * mix(pow(cosTheta_unorm, 0.2f), 1.0f, light.y);
     vec3 Mie = 0.2f * pow(cosTheta_unorm, 200.0f) * SunAbsorption;
     vec3 CalculatedSkyColor = Rayleigh + Mie;
     sun = SunAbsorption;
@@ -705,6 +707,25 @@ vec3 CalculateSunShading(in SurfaceStruct Surface, in vec3 sun){
     return Surface.NdotL * sun * ComputeShadow(Surface);
 }
 
+// Taken from continuum shaders
+float Get3DNoise(in vec3 pos) {
+	pos.z += 0.0f;
+
+	pos.xyz += 0.5f;
+
+	vec3 p = floor(pos);
+	vec3 f = fract(pos);
+
+	vec2 uv =  (p.xy + p.z * vec2(17.0f)) + f.xy;
+	vec2 uv2 = (p.xy + (p.z + 1.0f) * vec2(17.0f)) + f.xy;
+
+	vec2 coord =  (uv  + 0.5f) / noiseTextureResolution;
+	vec2 coord2 = (uv2 + 0.5f) / noiseTextureResolution;
+	float xy1 = texture2D(noisetex, coord).x;
+	float xy2 = texture2D(noisetex, coord2).x;
+	return mix(xy1, xy2, f.z);
+}
+
 // Should be flat varying from vert shader
 // But I'm lazy
 vec3 GetEyePositionShadow(void){
@@ -712,32 +733,59 @@ vec3 GetEyePositionShadow(void){
     return eye.xyz;
 }
 
-const float VolumetricLightingScattering = 0.2f;
+// Same for this
+vec3 GetEyePositionWorld(void){
+    vec4 eye = gbufferModelViewInverse * vec4(vec3(0.0f), 1.0f);
+    return eye.xyz + cameraPosition;
+}
+
+const float VolumetricLightingScattering = 0.1f;
+const float VolumetricLightingAbsorption = 0.0f;
+const float VolumetricLightingExtinction = VolumetricLightingScattering + VolumetricLightingAbsorption;
+const float VolumetricLightingScaleHeight = 10.0f;
+const float VolumetricLightingHeightOffset = -56.0f;
+const float VolumetricLightingMinHeight = 0.0f;
 
 // Computes in shadow clip space
-void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 eyePos = GetEyePositionShadow()){
-    vec3 toEye = eyePos - Surface.ShadowClip;
+void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 suncolor, in vec3 eyePosWorld = GetEyePositionWorld(), in vec3 eyePosShadow = GetEyePositionShadow()){
+    vec3 WorldStep = (Surface.World - eyePosWorld) / VOLUMETRIC_LIGHTING_STEPS;
+    float WorldStepLength = length(WorldStep);
+    vec3 WorldDirection = WorldStep / WorldStepLength;
+    vec3 toEye = Surface.ShadowClip - eyePosShadow;
     vec3 StepSize = (toEye) / VOLUMETRIC_LIGHTING_STEPS;
     vec3 StepDirection = normalize(StepSize);
     float StepLength = length(StepSize);
+    float ScatteredLight = VolumetricLightingScattering * PhaseHenyeyGreenstein(dot(sundir, WorldDirection), -0.3f);
     vec3 VolumetricLightingAccum = vec3(0.0f);
+    // TODO: precompute this in vert shader
+    // Media properties don't change, the density does
+    // That's why I'm not changing the coefficents
+    float DensityFactor = mix(1.0f, 7.0f, rainStrength);
+    vec3 AccumOpticalDepth = vec3(0.0f);
+    vec3 LightOpticalDepth = vec3(0.0f);
     for(float Step = 0.0f; Step < VOLUMETRIC_LIGHTING_STEPS; Step++){
-        vec3 SamplePosition = Surface.ShadowClip + StepSize * Step;
-        SamplePosition = DistortShadow(SamplePosition) * 0.5f + 0.5f;
-        VolumetricLightingAccum += ComputeVisibility(SamplePosition) * VolumetricLightingScattering;
+        vec3 SamplePositionShadow = eyePosShadow + StepSize * Step;
+        SamplePositionShadow = DistortShadow(SamplePositionShadow) * 0.5f + 0.5f;
+        vec3 SamplePositionWorld = eyePosWorld + WorldStep * Step;
+        float Density = exp(-max(SamplePositionWorld.y + VolumetricLightingHeightOffset, VolumetricLightingMinHeight) / VolumetricLightingScaleHeight) * DensityFactor
+                      * pow(Get3DNoise(SamplePositionWorld + frameTimeCounter), 1.2f);
+        AccumOpticalDepth += vec3(Density * VolumetricLightingExtinction * WorldStepLength);
+        vec3 Transmittance = exp(-AccumOpticalDepth);
+        vec3 VolumetricLighting = ComputeVisibility(SamplePositionShadow) * Density * Transmittance;
+        VolumetricLightingAccum += VolumetricLighting;
     }
-    // Not exactly physically based, but makes VL look good up close
-    // Only issue is when you walk towards an object in the sun
-    // TODO: fix that issue listed above
-    VolumetricLightingAccum /= VOLUMETRIC_LIGHTING_STEPS;
+    VolumetricLightingAccum = VolumetricLightingAccum * ScatteredLight * WorldStepLength * suncolor;
     // TODO: multiply it by a good phase function for VL (not mie, that just made it look worse)
     Shading.Volumetric = VolumetricLightingAccum;
+    Shading.OpticalDepth = AccumOpticalDepth * WorldStepLength;
 }
 
 void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 suncol){
     Shading.Sun = CalculateSunShading(Surface, suncol);
     ComputeLightmap(Surface, Shading);
-    ComputeVolumetricLighting(Surface, Shading, sundir);
+    #ifndef DEFERRED_SHADING
+    ComputeVolumetricLighting(Surface, Shading, sundir, suncol);
+    #endif
     Shading.Volumetric *= suncol;
 }
 
@@ -753,7 +801,7 @@ vec3 ComputeFog(in vec3 light, in vec3 dir, in vec3 color, in float dist){
 
 void ComputeColor(in SurfaceStruct Surface, inout ShadingStruct Shading){
     vec3 Lighting = Shading.Sun + Shading.Torch + Shading.Sky;
-    Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f);// + vec4(Shading.Volumetric, 0.0f);
+    Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f) + vec4(Shading.Volumetric, 0.0f);
     //Shading.Color.rgb = ComputeFog(vec3(0.0f), vec3(0.0f), Shading.Color.rgb, 100);
     //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st);
     //Shading.Color = vec4(vec3(Surface.NdotL), 1.0f);

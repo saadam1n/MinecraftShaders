@@ -36,6 +36,7 @@ vec3 ACESFilmicTonemapping(vec3 color) {
 
 void main(){
     vec4 color = texture2D(colortex7, texcoords);
+	//color.rgb *= 3.0f;
     //Apply tonemap 
 	color.rgb = ACESFilmicTonemapping(color.rgb);
 	#ifdef DEBUG

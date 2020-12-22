@@ -26,7 +26,7 @@ const float ShadowQualitySamplesPerSide =  (2*(SHADOW_SAMPLES * SHADOW_QUALITY)+
 const float ShadowQualityArea = ShadowQualitySamplesPerSide * ShadowQualitySamplesPerSide;
 const float ShadowArea = ShadowSamplesPerSide * ShadowSamplesPerSide;
 
-const int noiseTextureResolution = 64;
+const int noiseTextureResolution = 256;
 
 const bool generateShadowMipmap = false;
 const float shadowIntervalSize 	= 4.0f;
@@ -50,6 +50,10 @@ const float drynessHalfLife = 0.0001f;
 const float BloomSamplesPerSide = (2.0f * BLOOM_SAMPLES + 1.0f);
 const float BloomStandardDeviation = BloomSamplesPerSide - 10.0f;
 
-#define VOLUMETRIC_LIGHTING_STEPS 32.0f
+#define VOLUMETRIC_LIGHTING_STEPS 64.0f
+#define VOLUMETRIC_OPTICAL_DEPTH_STEPS 64.0f
+
+#define VOLUMETRIC_LIGHTING_BLUR_SAMPLES 3.0f
+const float VolumetricLightingStandardDeviation = 5.0f;
 
 #endif

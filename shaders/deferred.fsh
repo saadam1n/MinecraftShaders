@@ -1,5 +1,7 @@
 #version 120
 
+#define DEFERRED_SHADING
+
 #include "util/commonfuncs.glsl"
 
 varying vec2 texcoords;

@@ -9,4 +9,5 @@ void main(){
     /* DRAWBUFFERS:012 */
     gl_FragData[0] = color;
     gl_FragData[1] = vec4(normal * 0.5f + 0.5f, 1.0f);
+    gl_FragData[2] = vec4(gl_TexCoord[1].st, 1.0f, 1.0f);
 }
