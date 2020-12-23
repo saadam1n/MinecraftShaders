@@ -11,8 +11,9 @@ const float ShadowDistanceFadeLength = shadowDistance - ShadowDistanceFade;
 const float sunPathRotation = -40.0f;
 const bool shadowHardwareFiltering = true;
 
-const int colortex0Format = RGBA16F;
+const int colortex0Format = RGBA16;
 const int colortex1Format = RGBA16;
+const int colortex7Format = RGBA32F;
 
 #define SHADOW_MAP_BIAS 0.9	
 
@@ -54,6 +55,10 @@ const float BloomStandardDeviation = BloomSamplesPerSide - 10.0f;
 #define VOLUMETRIC_OPTICAL_DEPTH_STEPS 64.0f
 
 #define VOLUMETRIC_LIGHTING_BLUR_SAMPLES 3.0f
+// alt val: 16
 const float VolumetricLightingStandardDeviation = 5.0f;
+// alt val 25
+
+#define VOLUMETRIC_LIGHTING
 
 #endif

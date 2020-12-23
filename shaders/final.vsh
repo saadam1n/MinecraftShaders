@@ -1,8 +1,9 @@
 #version 120
 
-varying vec2 texcoords;
+#include "util/commonfuncs.glsl"
 
 void main(){
     gl_Position = ftransform();
-    texcoords = gl_MultiTexCoord0.st;
+    gl_TexCoord[0].st = gl_MultiTexCoord0.st;
+    gl_TexCoord[1].st = (gl_MultiTexCoord0.st * vec2(viewWidth, viewHeight) / noiseTextureResolution) + GetRandomNumber().xy;
 }

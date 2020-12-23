@@ -7,7 +7,9 @@ flat varying vec3 EyePosShadow;
 flat varying vec3 LightDirection;
 flat varying vec3 LightColor;
 
+
 void main() {
+    #ifdef VOLUMETRIC_LIGHTING
     SurfaceStruct Surface;
     ShadingStruct Shading;
 
@@ -27,4 +29,9 @@ void main() {
     /* DRAWBUFFERS:01 */
     gl_FragData[0] = vec4(VolumetricFogColor, 1.0f);
     gl_FragData[1] = vec4(OpticalDepth, 1.0f);
+    #else
+    /* DRAWBUFFERS:01 */
+    gl_FragData[0] = vec4(1.0f);
+    gl_FragData[1] = vec4(1.0f);
+    #endif
 }

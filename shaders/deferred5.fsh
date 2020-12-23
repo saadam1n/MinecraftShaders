@@ -7,10 +7,13 @@
 void main(){
     vec4 BackgroundColor = texture2D(colortex7, gl_TexCoord[0].st);
     vec4 FogColor = texture2D(colortex0, gl_TexCoord[0].st);
+    #ifdef VOLUMETRIC_LIGHTING
     #ifdef OPTICAL_DEPTH_FOG
     vec3 OpticalDepth = texture2D(colortex1, gl_TexCoord[0].st).rgb;
-    BackgroundColor.rgb *= exp(-OpticalDepth);
+    //BackgroundColor.rgb *= exp(-OpticalDepth);
+    #endif
     #endif
     /* DRAWBUFFERS:7 */
-    gl_FragData[0] = BackgroundColor + FogColor;
+    gl_FragData[0] = BackgroundColor;
+    //gl_FragData[1] = FogColor;
 }

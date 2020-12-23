@@ -7,6 +7,200 @@
 #include "uniforms.glsl"
 #include "structures.glsl"
 
+// TODO: loops through all rows
+vec4 GetRandomNumber(void){
+    vec2 noisecoords;
+    noisecoords.x = float(frameCounter) / float(noiseTextureResolution);
+    // Do a bunch of module stuff to loop through all rows
+    // But im lazy
+    return texture2D(noisetex, noisecoords);
+}
+
+// Taken from continuum shaders
+float Get3DNoise(in vec3 pos);
+float PhaseMie(in float cosTheta);
+float PhaseHenyeyGreenstein(in float cosTheta, in float g);
+
+// A lot of these were taken from https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
+
+float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
+
+float Get3DNoise1(vec3 p){
+    vec3 a = floor(p);
+    vec3 d = p - a;
+    d = d * d * (3.0 - 2.0 * d);
+
+    vec4 b = a.xxyy + vec4(0.0, 1.0, 0.0, 1.0);
+    vec4 k1 = perm(b.xyxy);
+    vec4 k2 = perm(k1.xyxy + b.zzww);
+
+    vec4 c = k2 + a.zzzz;
+    vec4 k3 = perm(c);
+    vec4 k4 = perm(c + 1.0);
+
+    vec4 o1 = fract(k3 * (1.0 / 41.0));
+    vec4 o2 = fract(k4 * (1.0 / 41.0));
+
+    vec4 o3 = o2 * d.z + o1 * (1.0 - d.z);
+    vec2 o4 = o3.yw * d.x + o3.xz * (1.0 - d.x);
+
+    return o4.y * d.y + o4.x * (1.0 - d.y);
+}
+
+//	<https://www.shadertoy.com/view/4dS3Wd>
+//	By Morgan McGuire @morgan3d, http://graphicscodex.com
+//
+float hash(float n) { return fract(sin(n) * 1e4); }
+float hash(vec2 p) { return fract(1e4 * sin(17.0 * p.x + p.y * 0.1) * (0.1 + abs(sin(p.y * 13.0 + p.x)))); }
+
+float GetNoise1D(float x) {
+	float i = floor(x);
+	float f = fract(x);
+	float u = f * f * (3.0 - 2.0 * f);
+	return mix(hash(i), hash(i + 1.0), u);
+}
+
+float GetNoise2D(vec2 x) {
+	vec2 i = floor(x);
+	vec2 f = fract(x);
+
+	// Four corners in 2D of a tile
+	float a = hash(i);
+	float b = hash(i + vec2(1.0, 0.0));
+	float c = hash(i + vec2(0.0, 1.0));
+	float d = hash(i + vec2(1.0, 1.0));
+
+	// Simple 2D lerp using smoothstep envelope between the values.
+	// return vec3(mix(mix(a, b, smoothstep(0.0, 1.0, f.x)),
+	//			mix(c, d, smoothstep(0.0, 1.0, f.x)),
+	//			smoothstep(0.0, 1.0, f.y)));
+
+	// Same code, with the clamps in smoothstep and common subexpressions
+	// optimized away.
+	vec2 u = f * f * (3.0 - 2.0 * f);
+	return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+}
+
+// This one has non-ideal tiling properties that I'm still tuning
+float Get3DNoise2(vec3 x) {
+	const vec3 step = vec3(110, 241, 171);
+
+	vec3 i = floor(x);
+	vec3 f = fract(x);
+ 
+	// For performance, compute the base input to a 1D hash from the integer part of the argument and the 
+	// incremental change to the 1D based on the 3D -> 1D wrapping
+    float n = dot(i, step);
+
+	vec3 u = f * f * (3.0 - 2.0 * f);
+	return mix(mix(mix( hash(n + dot(step, vec3(0, 0, 0))), hash(n + dot(step, vec3(1, 0, 0))), u.x),
+                   mix( hash(n + dot(step, vec3(0, 1, 0))), hash(n + dot(step, vec3(1, 1, 0))), u.x), u.y),
+               mix(mix( hash(n + dot(step, vec3(0, 0, 1))), hash(n + dot(step, vec3(1, 0, 1))), u.x),
+                   mix( hash(n + dot(step, vec3(0, 1, 1))), hash(n + dot(step, vec3(1, 1, 1))), u.x), u.y), u.z);
+}
+
+// https://www.shadertoy.com/view/4lGGWy
+float Get3DNoise3( in vec3 x )
+{
+    vec3 p = floor(x);
+    vec3 f = fract(x);
+	f = f*f*(3.0-2.0*f);
+	vec2 uv = (p.xy+vec2(37.0,17.0)*p.z) + f.xy;
+	vec2 rg = texture2D(noisetex, (uv+0.5)/256.0).yx;
+	return mix( rg.x, rg.y, f.z );
+} 
+
+struct Plane {
+    vec3 Position;
+    vec3 Normal;
+};
+
+
+struct Ray {
+    vec3 Origin;
+    vec3 Direction;
+};
+
+float Intersect(in Ray ray, in Plane plane){
+    float div = dot(ray.Direction, plane.Normal);
+    float num = dot(plane.Position - ray.Origin, plane.Normal);
+    return num / div;
+}
+
+#define CLOUD_START 256.0f
+#define CLOUD_HEIGHT 16.0f
+#define CLOUD_INSCATTERING_STEPS 64.0f
+#define CLOUD_LIGHT_STEPS 16.0f
+
+void InitCloudPlanes(out Plane upper, out Plane lower){
+    upper.Normal = lower.Normal = vec3(0.0f, 1.0f, 0.0f);
+    upper.Position.xz = lower.Position.xz = vec2(0.0f);
+    lower.Position.y = CLOUD_START;
+    upper.Position.y = CLOUD_START + CLOUD_HEIGHT;
+}
+
+const vec3 CloudScattering = vec3(0.0005f);
+const vec3 CloudAbsoption = vec3(0.000001f);
+const vec3 CloudExtinction = CloudScattering + CloudAbsoption;
+
+float SampleCloudDensity(in vec3 pos){
+    float Noise = Get3DNoise(pos * 0.001f + frameTimeCounter * 0.1f);
+    return Noise;
+}
+
+// ViewPos + dir * (RayMarchPosition + 0.5f * RayMarchStepLength)
+
+vec3 ComputeCloudColor(in vec3 playerpos, in vec3 dir, in vec3 lightdir, in vec3 lightcolor, in vec3 background) {
+    Plane UpperCloudPlane, LowerCloudPlane;
+    InitCloudPlanes(UpperCloudPlane, LowerCloudPlane);
+    Ray ViewingRay;
+    ViewingRay.Origin = playerpos;
+    ViewingRay.Direction = dir;
+    // TODO: Add support for cases where the player is in the cloud
+    float ViewStartDist =  Intersect(ViewingRay, LowerCloudPlane);
+    float ViewEndDist =  Intersect(ViewingRay, UpperCloudPlane);
+    vec3 ViewStart = ViewingRay.Origin + ViewingRay.Direction * ViewStartDist;
+    vec3 ViewEnd   = ViewingRay.Origin + ViewingRay.Direction * ViewEndDist;
+    vec3 StepSize = (ViewEnd - ViewStart) / CLOUD_INSCATTERING_STEPS;
+    float StepLength = ViewEndDist - ViewStartDist;
+    vec3 StepDirection = StepSize / StepLength;
+    vec3 AccumOpticalDepth = vec3(0.0f);
+    vec3 ViewTransmittance = vec3(1.0f);
+    vec3 AccumColor = vec3(0.0f);
+    vec3 ScatteredLight = CloudScattering * PhaseHenyeyGreenstein(dot(dir, lightdir), -0.9);
+    float RayMarchPosition = 0.0f;
+    for(float Step = 0; Step < CLOUD_INSCATTERING_STEPS; Step++){
+        vec3 SamplePosition = ViewStart + ViewingRay.Direction * (RayMarchPosition * 0.5f * StepLength);
+        float Density = SampleCloudDensity(SamplePosition);
+        vec3 CurrentOpticalDepth = vec3(Density) * CloudExtinction * StepLength;
+        AccumOpticalDepth += CurrentOpticalDepth;
+        ViewTransmittance = ViewTransmittance * exp(-CurrentOpticalDepth);
+        Ray LightRay;
+        LightRay.Origin = SamplePosition;
+        LightRay.Direction = lightdir;
+        float LightEndDist = Intersect(ViewingRay, LowerCloudPlane);
+        vec3 LightEndPos = LightRay.Origin + LightRay.Direction * LightEndDist;
+        vec3 LightStep = (LightEndPos - LightRay.Origin) / CLOUD_LIGHT_STEPS;
+        float LightStepLength = LightEndDist / CLOUD_LIGHT_STEPS;
+        vec3 LightOpticalDepth = vec3(0.0f);
+        float LightRayMarchPosition = 0.0f;
+        for(float LightStep = 0.0f; LightStep < CLOUD_LIGHT_STEPS; LightStep++){
+            vec3 LightSamplePosition = LightRay.Origin + LightRay.Direction * (LightRayMarchPosition + 0.5f * LightStepLength);
+            float LightDensity = SampleCloudDensity(LightSamplePosition);
+            LightOpticalDepth += vec3(LightDensity);
+            LightRayMarchPosition += LightStepLength;
+        }
+        vec3 LightTransmittance = exp(-LightOpticalDepth * CloudExtinction * LightStepLength);
+        vec3 TransmittedSunColor = LightTransmittance * ViewTransmittance * lightcolor * ScatteredLight;
+        AccumColor += TransmittedSunColor * StepLength;
+        RayMarchPosition += StepLength;
+    }
+    vec3 TransmittedBackgroundColor = ViewTransmittance * background;
+    return TransmittedBackgroundColor + AccumColor;
+}
+
 vec3 GetSkyTopColor(void){
     float Input = abs((float(worldTime) / 24000.0f) * 2.0f - 1.0f);
     // RED
@@ -141,12 +335,6 @@ const float SunColorBrightness = 0.3f;
 #define INSCATTERING_STEPS 8
 #define OPTICAL_DEPTH_STEPS 2
 
-
-struct Ray {
-    vec3 Origin;
-    vec3 Direction;
-};
-
 // Optical depth:
 // x - rayleigh
 // y - mie
@@ -182,7 +370,10 @@ vec3 ComputeTransmittance(Ray ray, float pointdistance) {
 // TODO: Optimize this 
 // Also switch to trapezoidal integration
 
-vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 viewtransmittance) {
+vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, inout vec3 viewtransmittance) {
+    //return vec3(1.0f);
+    //dir.y = max(dir.y, 0.1f);
+    //dir = normalize(dir);
     vec3 ViewPos = vec3(0.0f, EarthRadius, 0.0f);
     float AtmosphereDistance = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
     vec3 AtmosphereIntersectionLocation = ViewPos + dir * AtmosphereDistance;
@@ -224,35 +415,13 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
 
 // https://www.shadertoy.com/view/llffzM 
 const vec3 SkyColor = vec3(0.39, 0.57, 1.0);
+const vec3 SkyGradientBottom = vec3(0.8, 0.9, 1.0f);
 
-// https://www.shadertoy.com/view/Ml2cWG 
-const float Density = 1.0f;
-float ZenithDensity(float dir_y){
-    return Density / pow(max(dir_y + 0.1f, 0.35e-2), 0.75);
-}
-
-// params: Scattering coefficent, optical depth
-vec3 CalculateAbsorption(in vec3 scatter, in float od){
-    return exp(-od * scatter);
-}
-
-// This is my gift to all you iGPU users out there
-// You guys still get an amazing sky
-// Most of this is based of https://www.shadertoy.com/view/Ml2cWG
-// I'll try later to make one completely on my own
 vec3 ComputeInaccurateAtmosphere(in vec3 light, in vec3 dir, out vec3 sun) {
-    vec3 ViewPos = vec3(0.0f, EarthRadius, 0.0f);
-    float ViewDensity = ZenithDensity(dir.y);
-    float SunDensity = ZenithDensity(light.y);
-    vec3 ViewAbsorption = CalculateAbsorption(SkyColor, ViewDensity);
-    vec3 SunAbsorption = CalculateAbsorption(SkyColor, SunDensity);
+    vec3 Rayleigh = mix(SkyGradientBottom, SkyColor, min(dir.y + 0.5f, 1.0f)); 
     float cosTheta = dot(light, dir);
-    float cosTheta_unorm = cosTheta * 0.5f + 0.5f;
-    vec3 Rayleigh = ViewDensity * ViewAbsorption * SkyColor * mix(pow(cosTheta_unorm, 0.2f), 1.0f, light.y);
-    vec3 Mie = 0.2f * pow(cosTheta_unorm, 200.0f) * SunAbsorption;
-    vec3 CalculatedSkyColor = Rayleigh + Mie;
-    sun = SunAbsorption;
-    return CalculatedSkyColor;
+    float Mie = pow(cosTheta * 0.5f + 0.5f, 42.0f) * 0.3f;
+    return Rayleigh + Mie;
 }
 
 
@@ -262,7 +431,7 @@ vec3 ComputeInaccurateSun(in vec3 light, in vec3 dir, in vec3 absorption) {
     if(dot(light, dir) < SunSpotSize){
         return vec3(0.0f);
     }
-    return vec3(5.0f) * absorption;
+    return vec3(0.0f);
 }
 
 #define PHYSICALLY_BASED_ATMOSPHERE // Use a physically based model for rendering the atmosphere
@@ -299,14 +468,13 @@ vec3 ComputeSunColor(in vec3 light, in vec3 dir){
     return saturate(Transmittance * SunColor);
 }
 
-vec3 ComputeSunColor(in vec3 light, in vec3 dir, in vec3 opticaldepth){
+vec3 ComputeSunColor(in vec3 light, in vec3 dir, in vec3 transmittance){
     if(dot(light, dir) < SunSpotSize){
         return vec3(0.0f);
     }
-    vec3 Transmittance = Transmittance(opticaldepth);
     // The saturate breaks the physical basis of this function
     // But gives us nice orange color without too white during the day
-    return saturate(Transmittance * SunColor);
+    return saturate(transmittance * SunColor);
 }
 
 vec4 CalculateShadow(in sampler2D ShadowDepth, in vec3 coords){ 
@@ -729,13 +897,13 @@ float Get3DNoise(in vec3 pos) {
 // Should be flat varying from vert shader
 // But I'm lazy
 vec3 GetEyePositionShadow(void){
-    vec4 eye = shadowProjection * shadowModelView * gbufferModelViewInverse * vec4(vec3(0.0f), 1.0f);
+    vec4 eye = shadowProjection * shadowModelView * gbufferModelViewInverse * vec4(0.0f, 0.0f, 0.1f, 1.0f);
     return eye.xyz;
 }
 
 // Same for this
 vec3 GetEyePositionWorld(void){
-    vec4 eye = gbufferModelViewInverse * vec4(vec3(0.0f), 1.0f);
+    vec4 eye = gbufferModelViewInverse * vec4(0.0f, 0.0f, 0.1f, 1.0f);
     return eye.xyz + cameraPosition;
 }
 
@@ -746,8 +914,11 @@ const float VolumetricLightingScaleHeight = 10.0f;
 const float VolumetricLightingHeightOffset = -56.0f;
 const float VolumetricLightingMinHeight = 0.0f;
 
+//#define VARYING_VOLUMETRIC_LIGHTING // Applies noise to the VL density function
+
 // Computes in shadow clip space
 void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 suncolor, in vec3 eyePosWorld = GetEyePositionWorld(), in vec3 eyePosShadow = GetEyePositionShadow()){
+    #ifdef VOLUMETRIC_LIGHTING
     vec3 WorldStep = (Surface.World - eyePosWorld) / VOLUMETRIC_LIGHTING_STEPS;
     float WorldStepLength = length(WorldStep);
     vec3 WorldDirection = WorldStep / WorldStepLength;
@@ -767,8 +938,12 @@ void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct 
         vec3 SamplePositionShadow = eyePosShadow + StepSize * Step;
         SamplePositionShadow = DistortShadow(SamplePositionShadow) * 0.5f + 0.5f;
         vec3 SamplePositionWorld = eyePosWorld + WorldStep * Step;
+        #ifdef VARYING_VOLUMETRIC_LIGHTING
         float Density = exp(-max(SamplePositionWorld.y + VolumetricLightingHeightOffset, VolumetricLightingMinHeight) / VolumetricLightingScaleHeight) * DensityFactor
                       * pow(Get3DNoise(SamplePositionWorld + frameTimeCounter), 1.2f);
+        #else
+        float Density = exp(-max(SamplePositionWorld.y + VolumetricLightingHeightOffset, VolumetricLightingMinHeight) / VolumetricLightingScaleHeight) * DensityFactor;
+        #endif
         AccumOpticalDepth += vec3(Density * VolumetricLightingExtinction * WorldStepLength);
         vec3 Transmittance = exp(-AccumOpticalDepth);
         vec3 VolumetricLighting = ComputeVisibility(SamplePositionShadow) * Density * Transmittance;
@@ -778,6 +953,10 @@ void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct 
     // TODO: multiply it by a good phase function for VL (not mie, that just made it look worse)
     Shading.Volumetric = VolumetricLightingAccum;
     Shading.OpticalDepth = AccumOpticalDepth * WorldStepLength;
+    #else
+    Shading.Volumetric = vec3(0.0f);
+    Shading.OpticalDepth =  vec3(0.0f);
+    #endif
 }
 
 void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 suncol){
@@ -801,7 +980,7 @@ vec3 ComputeFog(in vec3 light, in vec3 dir, in vec3 color, in float dist){
 
 void ComputeColor(in SurfaceStruct Surface, inout ShadingStruct Shading){
     vec3 Lighting = Shading.Sun + Shading.Torch + Shading.Sky;
-    Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f) + vec4(Shading.Volumetric, 0.0f);
+    Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f);// + vec4(Shading.Volumetric, 0.0f);
     //Shading.Color.rgb = ComputeFog(vec3(0.0f), vec3(0.0f), Shading.Color.rgb, 100);
     //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st);
     //Shading.Color = vec4(vec3(Surface.NdotL), 1.0f);
@@ -810,6 +989,61 @@ void ComputeColor(in SurfaceStruct Surface, inout ShadingStruct Shading){
 float Guassian(in float sigma, in float x){
     float sigma2_2 = 2.0f * sigma * sigma;
     return (1.0f / sqrt(MATH_PI * sigma2_2)) * exp(x * x / sigma2_2);
+}
+
+vec3 GetSunMoonDirection(in vec3 viewPos){
+    /*
+    vec4 v4pos = vec4(viewPos, 1.0f);
+    v4pos = gbufferModelViewInverse * v4pos;
+    return normalize(v4pos.xyz);*/
+    return normalize(mat3(gbufferModelViewInverse) * viewPos);
+}
+
+vec3 GetLightColor(void){
+    vec3 SunDirection = GetSunMoonDirection(sunPosition);
+    vec3 SunColor = ComputeSunColor(SunDirection, SunDirection) + ComputeAtmosphereColor(SunDirection, SunDirection);
+    vec3 MoonColor = vec3(0.1f, 0.15f, 0.9f);
+    return SunColor * 0.7f;
+}
+
+//	Classic Perlin 3D Noise 
+//	by Stefan Gustavson
+//
+vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+vec2 fade(vec2 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}
+float PerlinNoise(vec2 P){
+  vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
+  vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
+  Pi = mod(Pi, 289.0); // To avoid truncation effects in permutation
+  vec4 ix = Pi.xzxz;
+  vec4 iy = Pi.yyww;
+  vec4 fx = Pf.xzxz;
+  vec4 fy = Pf.yyww;
+  vec4 i = permute(permute(ix) + iy);
+  vec4 gx = 2.0 * fract(i * 0.0243902439) - 1.0; // 1/41 = 0.024...
+  vec4 gy = abs(gx) - 0.5;
+  vec4 tx = floor(gx + 0.5);
+  gx = gx - tx;
+  vec2 g00 = vec2(gx.x,gy.x);
+  vec2 g10 = vec2(gx.y,gy.y);
+  vec2 g01 = vec2(gx.z,gy.z);
+  vec2 g11 = vec2(gx.w,gy.w);
+  vec4 norm = 1.79284291400159 - 0.85373472095314 * 
+    vec4(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11));
+  g00 *= norm.x;
+  g01 *= norm.y;
+  g10 *= norm.z;
+  g11 *= norm.w;
+  float n00 = dot(g00, vec2(fx.x, fy.x));
+  float n10 = dot(g10, vec2(fx.y, fy.y));
+  float n01 = dot(g01, vec2(fx.z, fy.z));
+  float n11 = dot(g11, vec2(fx.w, fy.w));
+  vec2 fade_xy = fade(Pf.xy);
+  vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
+  float n_xy = mix(n_x.x, n_x.y, fade_xy.y);
+  float noise = 2.3 * n_xy;
+  return pow(noise * 0.5f + 0.5f, 3.0f);
 }
 
 #endif

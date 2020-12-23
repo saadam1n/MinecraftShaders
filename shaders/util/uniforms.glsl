@@ -58,5 +58,6 @@ uniform vec3 skyColor;
 uniform vec3 fogColor;
 
 uniform float screenBrightness;
+uniform int frameCounter;
 
 #endif

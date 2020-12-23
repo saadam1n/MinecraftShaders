@@ -3,6 +3,7 @@
 varying vec2 texcoords;
 varying vec3 ViewSpaceViewDir;
 flat varying vec3 LightDirection;
+flat varying vec3 LightColor;
 
 #include "util/commonfuncs.glsl"
 
@@ -22,7 +23,13 @@ void main(){
         Color.rgb += ComputeInaccurateAtmosphere(LightDirection, Direction, Absorption);
         Color.rgb += ComputeInaccurateSun(LightDirection, Direction, Absorption);
         #endif
+        //Color.rgb = Direction * 0.5f + 0.5f;
         Color.a = 1.0f;
+        /*
+        if(Direction.y > 0.0f){
+            Color.rgb = ComputeCloudColor(GetEyePositionWorld(), Direction, LightDirection, LightColor, Color.rgb);
+        }
+        */
     } else {
         Color = texture2D(colortex7, texcoords);
     }

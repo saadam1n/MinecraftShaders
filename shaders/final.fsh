@@ -1,8 +1,15 @@
 #version 120
 
-varying vec2 texcoords;
+#include "util/commonfuncs.glsl"
 
-#include "util/uniforms.glsl"
+//Taken from https://github.com/CesiumGS/cesium/blob/master/Source/Shaders/Builtin/Functions/saturation.glsl
+vec3 Saturation(vec3 rgb, float adjustment) {
+    // Algorithm from Chapter 16 of OpenGL Shading Language
+    const vec3 W = vec3(0.2125, 0.7154, 0.0721);
+    vec3 intensity = vec3(dot(rgb, W));
+    return mix(intensity, rgb, adjustment);
+}
+
 
 vec3 FilmicToneMapping(vec3 color)
 {
@@ -34,14 +41,50 @@ vec3 ACESFilmicTonemapping(vec3 color) {
 
 //#define DEBUG
 
+#define FILM_GRAIN
+
+const float FilmGrainStrength = 0.00325f;
+
+vec3 ComputeFilmGrain(in vec3 color){
+	vec3 ColorOffset = (texture2D(noisetex,  gl_TexCoord[1].st).rgb * 2.0f - 1.0f) * FilmGrainStrength;
+	return max(color + ColorOffset, vec3(0.0f));
+}
+
+const float WaterDropletSpeed = 0.9f;
+const float WaterSampleOffset = 0.0001f;
+
+vec2 ComputeWaterDropletCoords(void){
+	vec2 WaterSampleCoords = vec2(gl_TexCoord[0].s, gl_TexCoord[0].t + WaterDropletSpeed * frameTimeCounter) * 4.0f;
+	// Now compute an offset
+	float WaterCenter = PerlinNoise(WaterSampleCoords);
+	float WaterLeft =  PerlinNoise(vec2(WaterSampleCoords.x - WaterSampleOffset, WaterSampleCoords.y));
+	float WaterUp = PerlinNoise(vec2(WaterSampleCoords.x, WaterSampleCoords.y + WaterSampleOffset));
+	vec2 WaterCoords = gl_TexCoord[0].st;
+	if((WaterCenter + WaterLeft + WaterUp) / 3.0f > 0.2f){
+		vec3 WaterNormal;
+		WaterNormal.r = WaterCenter - WaterLeft;
+		WaterNormal.g = WaterCenter - WaterUp;
+		WaterNormal.b = sqrt(1.0f - length(WaterNormal.rg));
+		WaterNormal = normalize(WaterNormal);
+		WaterCoords += WaterNormal.xz / 50.0f;
+	}
+	return mix(gl_TexCoord[0].st, WaterCoords, rainStrength);
+}
+
 void main(){
-    vec4 color = texture2D(colortex7, texcoords);
+	vec2 TexCoords = ComputeWaterDropletCoords();
+    vec4 color = texture2D(colortex7, TexCoords);
+	color.rgb = Saturation(color.rgb, 1.1f);
 	//color.rgb *= 3.0f;
     //Apply tonemap 
 	color.rgb = ACESFilmicTonemapping(color.rgb);
-	#ifdef DEBUG
-	color = texture2D(debugTex, texcoords);
+	#ifdef FILM_GRAIN
+	color.rgb = ComputeFilmGrain(color.rgb);
 	#endif
+	#ifdef DEBUG
+	color = texture2D(debugTex,  gl_TexCoord[0].st);
+	#endif
+	//color.rgb = vec3(PerlinNoise(TexCoords));
 	color.rgb = pow(color.rgb, vec3(1.0f / 2.2f));
     gl_FragColor = color;
 }
