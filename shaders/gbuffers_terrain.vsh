@@ -1,16 +1,16 @@
 #version 120
 
-attribute vec3 mc_Entity;
-attribute vec2 mc_midTexCoord;
+#define WAVING_PLANTS
+
+#include "lib/Utility/Attributes.glsl"
+#include "lib/Transform/Transform.glsl"
+#include "lib/Misc/Masks.glsl"
 
 varying vec3 Normal;
-varying float Masks;
-
-#include "lib/transform/plant.glsl"
-#include "lib/misc/masks.glsl"
+flat varying float Masks;
 
 void main(){
-    gl_Position = TransformGrass(mc_Entity, mc_midTexCoord);
+    gl_Position = TransformVertex(mc_Entity, mc_midTexCoord);
     Masks = CompressMaskStruct(ConstructMaskStruct(mc_Entity.x));
     Normal = gl_Normal;
     gl_TexCoord[0].st = gl_MultiTexCoord0.st;

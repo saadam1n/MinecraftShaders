@@ -4,7 +4,7 @@ varying vec3 Normal;
 varying float Masks;
 
 #include "lib/commonfuncs.glsl"
-#include "lib/misc/masks.glsl"
+#include "lib/Misc/Masks.glsl"
 
 // Based on KUDA 6.5.56
 float LumaAdjust(vec3 color) {

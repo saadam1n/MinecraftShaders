@@ -19,6 +19,7 @@ TODO list:
 - 2D clouds, like the one in void 2.0 and seus v10.1
 - Water droplet effect on the camera
 - Use a LUT for atmospheric scattering
+- Fire volume rendering
 # Known issues
 - Atmosphere looks bad and isn't completely physically based
 - Translucent items do not have proper forward rendering when dropped

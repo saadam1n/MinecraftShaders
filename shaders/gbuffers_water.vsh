@@ -1,10 +1,15 @@
 #version 120
 
+#include "lib/commonfuncs.glsl"
+#include "lib/Misc/Masks.glsl"
+
+attribute vec3 mc_Entity;
+
 varying vec3 Normal;
 flat varying vec3 LightDirection;
 flat varying vec3 CurrentSunColor;
-
-#include "lib/commonfuncs.glsl"
+// TODO: stop being lazy and actually send the direct values for the masks instead of compressing and decompressing it
+flat varying float fMasks;
 
 void main() {
     gl_Position = ftransform();
@@ -14,4 +19,6 @@ void main() {
     Normal = gl_Normal;
     LightDirection = GetLightDirection();
     CurrentSunColor = GetLightColor();
+    fMasks = CompressMaskStruct(ConstructMaskStruct(mc_Entity.x));
+
 }

@@ -1,8 +1,8 @@
 #ifndef TRANSFORM_PLANT_GLSL
 #define TRANSFORM_PLANT_GLSL 1
 
-#include "../uniforms.glsl"
-#include "../misc/plant_id.glsl"
+#include "../Utility/Uniforms.glsl"
+#include "../Misc/BlocKID.glsl"
 
 const float PosStrength = 20.0f;
 float WaveStrength = mix(2.0f, 5.0f, rainStrength); //Frequncy
@@ -23,10 +23,9 @@ vec3 PlantTransform(in vec3 plant){
 	return plant;
 }
 
-
 // Applies to grass, tall grass, wheat, etc
-vec4 TransformGrass(in vec3 entity, in vec2 midtexcoord){
-    if(IsGrass(entity.x) && gl_MultiTexCoord0.t < midtexcoord.t){
+vec4 TransformTallGrass(in vec2 midtexcoord){
+    if(gl_MultiTexCoord0.t < midtexcoord.t){
         #ifdef SHADOW_PASS
         vec4 WorldPosition = shadowModelViewInverse * gl_ModelViewMatrix * gl_Vertex; 
         #else

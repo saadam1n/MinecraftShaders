@@ -41,7 +41,7 @@ vec3 ACESFilmicTonemapping(vec3 color) {
 
 //#define DEBUG
 
-#define FILM_GRAIN
+//#define FILM_GRAIN
 
 const float FilmGrainStrength = 0.00325f;
 
@@ -74,7 +74,7 @@ vec2 ComputeWaterDropletCoords(void){
 void main(){
 	vec2 TexCoords = ComputeWaterDropletCoords();
     vec4 color = texture2D(colortex7, TexCoords);
-	color.rgb = Saturation(color.rgb, 1.15f) * 0.4545f;
+	color.rgb = Saturation(color.rgb, 1.1f);
 	//color.rgb *= 3.0f;
     //Apply tonemap 
 	color.rgb = ACESFilmicTonemapping(color.rgb);

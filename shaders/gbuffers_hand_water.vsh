@@ -1,10 +1,16 @@
 #version 120
 
+
+#include "lib/Misc/Masks.glsl"
+#include "lib/Transform/Transform.glsl"
+#include "lib/commonfuncs.glsl"
+
+attribute vec3 mc_Entity;
+
 varying vec3 Normal;
 flat varying vec3 LightDirection;
 flat varying vec3 CurrentSunColor;
-
-#include "lib/commonfuncs.glsl"
+flat varying float fMasks;
 
 void main() {
     gl_Position = ftransform();
@@ -14,4 +20,5 @@ void main() {
     Normal = mat3(gbufferModelViewInverse) * gl_NormalMatrix * gl_Normal;
     LightDirection = GetLightDirection();
     CurrentSunColor = GetLightColor();
+    fMasks = CompressMaskStruct(ConstructMaskStruct(mc_Entity.x));
 }

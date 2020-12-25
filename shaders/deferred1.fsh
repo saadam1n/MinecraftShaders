@@ -6,7 +6,7 @@ flat varying vec3 LightDirection;
 flat varying vec3 LightColor;
 
 #include "lib/commonfuncs.glsl"
-#include "lib/misc/masks.glsl"
+#include "lib/Misc/Masks.glsl"
 
 void main(){
     float Masks = texture2D(colortex2, texcoords).b;

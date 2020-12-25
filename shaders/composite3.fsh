@@ -1,6 +1,6 @@
 #version 120
 
-#include "lib/uniforms.glsl"
+#include "lib/Utility/Uniforms.glsl"
 
 #define BLOOM
 

@@ -5,7 +5,7 @@ attribute vec3 mc_Entity;
 varying vec3 Normal;
 varying float Masks;
 
-#include "lib/misc/masks.glsl"
+#include "lib/Misc/Masks.glsl"
 
 void main(){
     gl_Position = ftransform();

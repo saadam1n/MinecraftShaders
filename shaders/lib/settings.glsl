@@ -13,6 +13,7 @@ const bool shadowHardwareFiltering = true;
 
 const int colortex0Format = RGBA16;
 const int colortex1Format = RGBA16;
+const int colortex2Format = RGBA16;
 const int colortex7Format = RGBA32F;
 
 #define SHADOW_MAP_BIAS 0.9	

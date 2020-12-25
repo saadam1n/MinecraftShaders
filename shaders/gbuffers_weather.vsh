@@ -1,13 +1,12 @@
 #version 120
 
-attribute vec3 mc_Entity;
-attribute vec2 mc_midTexCoord;
+#include "lib/Utility/Attributes.glsl"
+#include "lib/Utility/Uniforms.glsl"
+#include "lib/Misc/Masks.glsl"
+#include "lib/settings.glsl"
 
 varying vec3 Normal;
 varying float Masks;
-
-#include "lib/uniforms.glsl"
-#include "lib/misc/masks.glsl"
 
 #define SHIFTING_RAIN_STYLE 0 // The style of the rain shift. 0 = No rain shift. 1 = My rain shift. 2 = Super shader V5.0 rain shift. [0 1 2]
 

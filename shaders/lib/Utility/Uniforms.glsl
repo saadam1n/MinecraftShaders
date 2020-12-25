@@ -1,9 +1,6 @@
 #ifndef UNIFORMS_GLSL
 #define UNIFORMS_GLSL 1
 
-// So I don't have to manually include for each file
-#include "settings.glsl"
-
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferProjectionInverse;

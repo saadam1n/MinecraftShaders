@@ -1,0 +1,7 @@
+#ifndef UTIL_CONSTANTS_GLSL
+#define UTIL_CONSTANTS_GLSL 1
+
+#define MATH_PI 3.14159265359
+#define MATH_E 2.71828182846
+
+#endif

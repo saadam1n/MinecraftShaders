@@ -1,12 +1,11 @@
 #ifndef COMMON_FUNCS_GLSL
 #define COMMON_FUNCS_GLSL 1
 
-#define MATH_PI 3.14159265359
-#define MATH_E 2.71828182846
-
-#include "uniforms.glsl"
+#include "Utility/Constants.glsl"
+#include "Utility/Uniforms.glsl"
 #include "structures.glsl"
-
+#include "Misc/Masks.glsl"
+#include "settings.glsl"
 
 const float SunSpotSize = 0.999;
 
@@ -30,90 +29,7 @@ float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
 vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
 vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
 
-float Get3DNoise1(vec3 p){
-    vec3 a = floor(p);
-    vec3 d = p - a;
-    d = d * d * (3.0 - 2.0 * d);
 
-    vec4 b = a.xxyy + vec4(0.0, 1.0, 0.0, 1.0);
-    vec4 k1 = perm(b.xyxy);
-    vec4 k2 = perm(k1.xyxy + b.zzww);
-
-    vec4 c = k2 + a.zzzz;
-    vec4 k3 = perm(c);
-    vec4 k4 = perm(c + 1.0);
-
-    vec4 o1 = fract(k3 * (1.0 / 41.0));
-    vec4 o2 = fract(k4 * (1.0 / 41.0));
-
-    vec4 o3 = o2 * d.z + o1 * (1.0 - d.z);
-    vec2 o4 = o3.yw * d.x + o3.xz * (1.0 - d.x);
-
-    return o4.y * d.y + o4.x * (1.0 - d.y);
-}
-
-//	<https://www.shadertoy.com/view/4dS3Wd>
-//	By Morgan McGuire @morgan3d, http://graphicscodex.com
-//
-float hash(float n) { return fract(sin(n) * 1e4); }
-float hash(vec2 p) { return fract(1e4 * sin(17.0 * p.x + p.y * 0.1) * (0.1 + abs(sin(p.y * 13.0 + p.x)))); }
-
-float GetNoise1D(float x) {
-	float i = floor(x);
-	float f = fract(x);
-	float u = f * f * (3.0 - 2.0 * f);
-	return mix(hash(i), hash(i + 1.0), u);
-}
-
-float GetNoise2D(vec2 x) {
-	vec2 i = floor(x);
-	vec2 f = fract(x);
-
-	// Four corners in 2D of a tile
-	float a = hash(i);
-	float b = hash(i + vec2(1.0, 0.0));
-	float c = hash(i + vec2(0.0, 1.0));
-	float d = hash(i + vec2(1.0, 1.0));
-
-	// Simple 2D lerp using smoothstep envelope between the values.
-	// return vec3(mix(mix(a, b, smoothstep(0.0, 1.0, f.x)),
-	//			mix(c, d, smoothstep(0.0, 1.0, f.x)),
-	//			smoothstep(0.0, 1.0, f.y)));
-
-	// Same code, with the clamps in smoothstep and common subexpressions
-	// optimized away.
-	vec2 u = f * f * (3.0 - 2.0 * f);
-	return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-}
-
-// This one has non-ideal tiling properties that I'm still tuning
-float Get3DNoise2(vec3 x) {
-	const vec3 step = vec3(110, 241, 171);
-
-	vec3 i = floor(x);
-	vec3 f = fract(x);
- 
-	// For performance, compute the base input to a 1D hash from the integer part of the argument and the 
-	// incremental change to the 1D based on the 3D -> 1D wrapping
-    float n = dot(i, step);
-
-	vec3 u = f * f * (3.0 - 2.0 * f);
-	return mix(mix(mix( hash(n + dot(step, vec3(0, 0, 0))), hash(n + dot(step, vec3(1, 0, 0))), u.x),
-                   mix( hash(n + dot(step, vec3(0, 1, 0))), hash(n + dot(step, vec3(1, 1, 0))), u.x), u.y),
-               mix(mix( hash(n + dot(step, vec3(0, 0, 1))), hash(n + dot(step, vec3(1, 0, 1))), u.x),
-                   mix( hash(n + dot(step, vec3(0, 1, 1))), hash(n + dot(step, vec3(1, 1, 1))), u.x), u.y), u.z);
-}
-
-// https://www.shadertoy.com/view/4lGGWy
-float Get3DNoise3( in vec3 x )
-{
-    vec3 p = floor(x);
-    vec3 f = fract(x);
-	f = f*f*(3.0-2.0*f);
-	vec2 uv = (p.xy+vec2(37.0,17.0)*p.z) + f.xy;
-	vec2 rg = texture2D(noisetex, (uv+0.5)/256.0).yx;
-	return mix( rg.x, rg.y, f.z );
-} 
 
 struct Plane {
     vec3 Position;
@@ -463,9 +379,7 @@ vec3 ComputeSunColor(in vec3 light, in vec3 dir){
     SunRay.Origin = ViewPos;
     SunRay.Direction = dir;
     vec3 Transmittance = ComputeTransmittance(SunRay, dist);
-    // The saturate breaks the physical basis of this function
-    // But gives us nice orange color without too white during the day
-    return saturate(Transmittance * SunColor);
+    return Transmittance * SunColor;
 }
 
 // Passing in ViewTransmittance did not work
@@ -474,9 +388,7 @@ vec3 ComputeSunColor(in vec3 light, in vec3 dir, in vec3 opticaldepth){
         return vec3(0.0f);
     }
     vec3 transmittance = Transmittance(opticaldepth);
-    // The saturate breaks the physical basis of this function
-    // But gives us nice orange color without too white during the day
-    return saturate(transmittance * SunColor);
+    return transmittance * SunColor;
 }
 
 vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
@@ -627,7 +539,7 @@ float Gaussian(float stddev, float x){
 
 // This is based off continuum's tutorial, I might switch to a guassian method instead later
 mat2 CreateRandomRotation(in vec2 texcoord){
-	float Rotation = texture2D(noisetex, texcoord).r;
+	float Rotation = texture2D(noisetex, texcoord).a;
 	return mat2(cos(Rotation), -sin(Rotation), sin(Rotation), cos(Rotation));
 }
 
@@ -804,9 +716,9 @@ void AdjustLightMap(inout SurfaceStruct surface){
 }
 
 void ComputeLightmap(in SurfaceStruct Surface, inout ShadingStruct Shading){
-    Shading.Torch = Surface.Torch * TorchEmitColor;
+    Shading.Torch = Surface.Torch * TorchEmitColor * (1.0f - Surface.Sky);
     // TODO: make this a flat varying variable
-    Shading.Sky = Surface.Sky * mix(GetSkyTopColor(), vec3(0.5f), 0.5f);
+    Shading.Sky = Surface.Sky * vec3(0.1f, 0.2f, 0.3f);
 }
 
 // Better name would be construct, but constructors don't exist in a functional programming language
@@ -884,15 +796,15 @@ vec4 BicubicTexture(in sampler2D tex, in vec2 coord)
 }
 
 vec4 SampleTextureAtlas(in vec2 coords){
-    return pow(texture2D(texture, coords), vec4(0.454545f));
+    return texture2D(texture, coords);
 }
 
 vec4 SampleTextureAtlas(in vec2 coords, float bias){
-    return pow(texture2D(texture, coords, bias), vec4(0.454545f));
+    return texture2D(texture, coords, bias);
 }
 
 vec4 SampleTextureAtlasLOD(in vec2 coords, float lod){
-    return pow(texture2DLod(texture, coords, lod), vec4(0.454545f));
+    return texture2DLod(texture, coords, lod);
 }
 
 void CreateSurfaceStructForward(in vec3 fragcoord, in vec3 normal, in vec3 l, out SurfaceStruct Surface){
@@ -919,27 +831,8 @@ void CreateSurfaceStructForward(in vec3 fragcoord, in vec3 normal, in vec3 l, ou
     Surface.NdotL = dotunorm(Surface.Normal, l);
 }
 
-vec3 CalculateSunShading(in SurfaceStruct Surface, in vec3 sun){
-    return Surface.NdotL * sun * ComputeShadow(Surface);
-}
-
-// Taken from continuum shaders
-float Get3DNoise(in vec3 pos) {
-	pos.z += 0.0f;
-
-	pos.xyz += 0.5f;
-
-	vec3 p = floor(pos);
-	vec3 f = fract(pos);
-
-	vec2 uv =  (p.xy + p.z * vec2(17.0f)) + f.xy;
-	vec2 uv2 = (p.xy + (p.z + 1.0f) * vec2(17.0f)) + f.xy;
-
-	vec2 coord =  (uv  + 0.5f) / noiseTextureResolution;
-	vec2 coord2 = (uv2 + 0.5f) / noiseTextureResolution;
-	float xy1 = texture2D(noisetex, coord).x;
-	float xy2 = texture2D(noisetex, coord2).x;
-	return mix(xy1, xy2, f.z);
+vec3 CalculateSunShading(in SurfaceStruct Surface, in vec3 sun, in MaskStruct masks){
+    return (masks.Plant ? 1.0f : Surface.NdotL) * sun * ComputeShadow(Surface) * vec3(0.84f, 0.87f, 0.795f);
 }
 
 // Should be flat varying from vert shader
@@ -1007,8 +900,8 @@ void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct 
     #endif
 }
 
-void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 suncol){
-    Shading.Sun = CalculateSunShading(Surface, suncol);
+void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, in MaskStruct masks, in vec3 sundir, in vec3 suncol){
+    Shading.Sun = CalculateSunShading(Surface, suncol, masks);
     ComputeLightmap(Surface, Shading);
     #ifndef DEFERRED_SHADING
     ComputeVolumetricLighting(Surface, Shading, sundir, suncol);
@@ -1040,10 +933,6 @@ float Guassian(in float sigma, in float x){
 }
 
 vec3 GetSunMoonDirection(in vec3 viewPos){
-    /*
-    vec4 v4pos = vec4(viewPos, 1.0f);
-    v4pos = gbufferModelViewInverse * v4pos;
-    return normalize(v4pos.xyz);*/
     return normalize(mat3(gbufferModelViewInverse) * viewPos);
 }
 
@@ -1051,7 +940,7 @@ vec3 GetLightColor(void){
     vec3 SunDirection = GetSunMoonDirection(sunPosition);
     vec3 SunColor = ComputeSunColor(SunDirection, SunDirection) + ComputeAtmosphereColor(SunDirection, SunDirection);
     vec3 MoonColor = vec3(0.1f, 0.15f, 0.9f);
-    return SunColor * 0.7f;
+    return saturate(SunColor * 0.7f);
 }
 
 #endif

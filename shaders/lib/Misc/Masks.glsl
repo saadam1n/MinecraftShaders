@@ -1,7 +1,7 @@
 #ifndef MISC_MASKS_GLSL
 #define MISC_MASKS_GLSL 1
 
-#include "plant_id.glsl"
+#include "BlockID.glsl"
 
 #extension GL_EXT_gpu_shader4 : enable
 
@@ -13,10 +13,8 @@ struct MaskStruct {
 #define SKY_BIT   1
 #define PLANT_BIT 2
 
-int PackMask(bool mask, const int shift){
-    int imask_val = int(mask);
-    imask_val = imask_val >> shift;
-    return imask_val;
+int PackMask(bool mask, const int bit){
+    return (mask ? bit : 0);
 }
 
 bool UnpackMask(int ival, const int bit){
@@ -29,8 +27,8 @@ bool UnpackMask(float fval, const int bit){
 
 float CompressMaskStruct(in MaskStruct masks){
     int imasks = 0;
-    imasks = imasks & PackMask(masks.Sky,   0);
-    imasks = imasks & PackMask(masks.Plant, 1);
+    imasks |= PackMask(masks.Sky,   SKY_BIT  );
+    imasks |= PackMask(masks.Plant, PLANT_BIT);
     float fmasks = float(imasks) / 65535.0f;
     return fmasks;
 }
@@ -46,7 +44,7 @@ MaskStruct DecompressMaskStruct(in float fmasks){
 MaskStruct ConstructMaskStruct(in float id){
     MaskStruct Masks;
     Masks.Sky = false;
-    Masks.Plant = IsPlant(id);
+    Masks.Plant = IS_TALL_GRASS(id);
     return Masks;
 }
 
