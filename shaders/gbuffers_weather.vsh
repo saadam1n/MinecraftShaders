@@ -4,6 +4,7 @@
 #define VERTEX
 
 #include "lib/Utility/Attributes.glsl"
+#include "lib/Utility/Packing.glsl"
 #include "lib/Transform/Transform.glsl"
 #include "lib/Misc/Masks.glsl"
 

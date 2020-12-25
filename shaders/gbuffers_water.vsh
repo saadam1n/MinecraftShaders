@@ -5,6 +5,7 @@
 #include "lib/Transform/Transform.glsl"
 #include "lib/Shading/Light.glsl"
 #include "lib/Misc/Masks.glsl"
+#include "lib/Utility/Packing.glsl"
 
 varying vec3 Normal;
 flat varying vec3 LightDirection;

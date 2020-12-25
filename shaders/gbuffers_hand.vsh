@@ -4,6 +4,7 @@
 #include "lib/Utility/Uniforms.glsl"
 #include "lib/Transform/Transform.glsl"
 #include "lib/Misc/Masks.glsl"
+#include "lib/Utility/Packing.glsl"
 
 varying vec3 Normal;
 flat varying float Masks;

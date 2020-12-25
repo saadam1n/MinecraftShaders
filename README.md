@@ -37,3 +37,4 @@ This shader is based of the works of:
 - [Scratch A Pixel - Simulating the Colors of the Sky](https://www.scratchapixel.com/lessons/procedural-generation-virtual-worlds/simulating-sky/simulating-colors-of-the-sky)
 - [Oskar Elek - Rendering Parametrizable Planetary Atmospheres with Multiple Scattering in Real-Time](http://www.klayge.org/material/4_0/Atmospheric/Rendering%20Parametrizable%20Planetary%20Atmospheres%20with%20Multiple%20Scattering%20in%20Real-Time.pdf) 
 - [Learn OpenGL - Bloom](https://learnopengl.com/Advanced-Lighting/Bloom)
+- [labPBR Documentation](https://github.com/rre36/lab-pbr/wiki)

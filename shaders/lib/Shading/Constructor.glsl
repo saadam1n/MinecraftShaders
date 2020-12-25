@@ -7,6 +7,7 @@
 #include "../Utility/Functions.glsl"
 #include "../Utility/TextureSampling.glsl"
 #include "../Transform/Distort.glsl"
+#include "../Utility/Packing.glsl"
 
 vec3 GetScreenCoords(in vec4 fragcoord){
     //fragcoord.xyz *= fragcoord.w;
@@ -47,7 +48,7 @@ SurfaceStruct ConstructSurfaceStructDeferred(in vec2 texcoords, in vec3 l){
     SurfaceStruct Surface;
 
     Surface.Diffuse = texture2D(colortex0, texcoords);
-    Surface.Normal = texture2D(colortex1, texcoords).rgb * 2.0f - 1.0f;
+    Surface.Normal = UnpackNormal(texture2D(colortex1, texcoords).rg);
 
     vec2 LightMap = texture2D(colortex2, texcoords).st; 
     Surface.Torch = LightMap.x;

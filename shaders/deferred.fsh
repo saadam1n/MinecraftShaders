@@ -6,6 +6,7 @@
 #include "lib/Shading/Constructor.glsl"
 #include "lib/Shading/Color.glsl"
 #include "lib/Misc/Masks.glsl"
+#include "lib/Utility/Packing.glsl"
 
 flat varying vec3 LightDirection;
 flat varying vec3 CurrentSunColor;

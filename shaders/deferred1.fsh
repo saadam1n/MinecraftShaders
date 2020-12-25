@@ -3,6 +3,7 @@
 #include "lib/Utility/Uniforms.glsl"
 #include "lib/VolumeRendering/Sky.glsl"
 #include "lib/Misc/Masks.glsl"
+#include "lib/Utility/Packing.glsl"
 
 varying vec3 ViewSpaceViewDir;
 flat varying vec3 LightDirection;
