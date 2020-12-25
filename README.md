@@ -4,12 +4,12 @@ My minecraft shaders for minecraft
 TODO list:
 - ~~Add forward rendering for gbuffers_water and other forward shader stages~~ 
 - ~~Improve shadows while optimially keeping shadowDistance around 128.0f and shadowResolution under 2048~~
-- Add other programs - partially done
-- Organize the shader files in a better manner
+- Add other programs - mostly done
+- ~~Organize the shader files in a better manner~~
 - Specular map (labpbr)
-- Add better support for plants (subsurface scattering and waving plants)
-- Sky rendering (volumetric clouds and atmospheric scattering, ozone absorption ) - partially done
-- Bloom
+- ~~Add better support for plants (subsurface scattering and waving plants)~~
+- Sky rendering (volumetric clouds and atmospheric scattering, ozone absorption ) - cloud rendering not started
+- Bloom - needs more tuning/fixing, maybe switch to bloom tiles
 - DOF 
 - SSAO
 - SSR
@@ -20,6 +20,7 @@ TODO list:
 - Water droplet effect on the camera
 - Use a LUT for atmospheric scattering
 - Fire volume rendering
+- Use a more realistic method for plant displacement, like the one used in SEUS v10.1
 # Known issues
 - Atmosphere looks bad and isn't completely physically based
 - Translucent items do not have proper forward rendering when dropped
