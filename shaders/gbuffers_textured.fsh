@@ -1,15 +1,9 @@
 #version 120
 
 varying vec3 Normal;
-varying float Masks;
+flat varying float Masks;
 
-#include "lib/commonfuncs.glsl"
-#include "lib/Misc/Masks.glsl"
-
-// Based on KUDA 6.5.56
-float LumaAdjust(vec3 color) {
-	return dot(color, vec3(0.3333));
-}
+#include "lib/Utility/TextureSampling.glsl"
 
 void main(){
     vec4 color = SampleTextureAtlas(gl_TexCoord[0].st) * gl_Color;

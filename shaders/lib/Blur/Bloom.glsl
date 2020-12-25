@@ -1,7 +1,15 @@
 #ifndef GAUSSIAN_BLOOM_GLSL
 #define GAUSSIAN_BLOOM_GLSL 1
 
-#include "commonfuncs.glsl"
+#include "../Utility/Uniforms.glsl"
+#include "../Utility/Constants.glsl"
+#include "../Utility/Blur.glsl"
+
+#define BLOOM_THRESHOLD 0.5f
+#define BLOOM_SAMPLES 16.0f
+
+const float BloomSamplesPerSide = (2.0f * BLOOM_SAMPLES + 1.0f);
+const float BloomStandardDeviation = 10;
 
 void main() {
     vec3 Accum = vec3(0.0f);

@@ -1,6 +1,7 @@
 #version 120
 
-#include "lib/commonfuncs.glsl"
+#include "lib/Internal/OptifineSettings.glsl"
+#include "lib/Utility/Uniforms.glsl"
 
 void main(){
     vec3 BloomColor = texture2D(colortex7, gl_TexCoord[0].st).rgb;

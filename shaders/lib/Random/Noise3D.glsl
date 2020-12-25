@@ -27,6 +27,11 @@ float GenerateNoise3D_0(in vec3 pos) {
 
 //	<https://www.shadertoy.com/view/4dS3Wd>
 //	By Morgan McGuire @morgan3d, http://graphicscodex.com
+
+float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
+
 float GenerateNoise3D_1(vec3 p){
     vec3 a = floor(p);
     vec3 d = p - a;

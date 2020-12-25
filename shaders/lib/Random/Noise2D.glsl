@@ -28,4 +28,13 @@ float GenerateNoise2D_0(vec2 x) {
 	return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
 }
 
+mat2 CreateRandomRotation(in vec2 texcoord){
+	float Rotation = texture2D(noisetex, texcoord).a;
+	return mat2(cos(Rotation), -sin(Rotation), sin(Rotation), cos(Rotation));
+}
+
+mat2 CreateRandomRotationScreen(in vec2 texcoord){
+	return CreateRandomRotation(texcoord * vec2(viewWidth / noiseTextureResolution, viewHeight / noiseTextureResolution));
+}
+
 #endif

@@ -1,14 +1,14 @@
 #version 120
 
-attribute vec3 mc_Entity;
-
-varying vec3 Normal;
-varying float Masks;
-
+#include "lib/Utility/Attributes.glsl"
+#include "lib/Transform/Transform.glsl"
 #include "lib/Misc/Masks.glsl"
 
+varying vec3 Normal;
+flat varying float Masks;
+
 void main(){
-    gl_Position = ftransform();
+    gl_Position = TransformVertex();
     Masks = CompressMaskStruct(ConstructMaskStruct(mc_Entity.x));
     Normal = gl_Normal;
     gl_TexCoord[0].st = gl_MultiTexCoord0.st;

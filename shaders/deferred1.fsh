@@ -1,15 +1,15 @@
 #version 120
 
-varying vec2 texcoords;
+#include "lib/Utility/Uniforms.glsl"
+#include "lib/VolumeRendering/Sky.glsl"
+#include "lib/Misc/Masks.glsl"
+
 varying vec3 ViewSpaceViewDir;
 flat varying vec3 LightDirection;
 flat varying vec3 LightColor;
 
-#include "lib/commonfuncs.glsl"
-#include "lib/Misc/Masks.glsl"
-
 void main(){
-    float Masks = texture2D(colortex2, texcoords).b;
+    float Masks = texture2D(colortex2, gl_TexCoord[0].st).b;
     vec4 Color;
     if(UnpackMask(Masks, SKY_BIT)){ // If DeferredFlag is 0.0f it is part of the sky
         // Init to 0
@@ -32,10 +32,8 @@ void main(){
         }
         */
     } else {
-        Color = texture2D(colortex7, texcoords);
+        Color = texture2D(colortex7, gl_TexCoord[0].st);
     }
-    //Color.rgb = vec3(float(UnpackMask(Masks, SKY_BIT)));
-    //Color.rgb = vec3(DeferredFlag);
     /* DRAWBUFFERS:7 */
     gl_FragData[0] = Color;
 }

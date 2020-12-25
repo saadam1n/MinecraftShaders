@@ -3,6 +3,9 @@
 
 #include "../Utility/Uniforms.glsl"
 #include "../Utility/Constants.glsl"
+#include "../Internal/ShaderSettings.glsl"
+
+// A lot of these were taken from https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 
 //	<https://www.shadertoy.com/view/4dS3Wd>
 //	By Morgan McGuire @morgan3d, http://graphicscodex.com
@@ -17,5 +20,13 @@ float GenerateNoise1D_0(float x) {
 	return mix(hash(i), hash(i + 1.0), u);
 }
 
+// TODO: loop through all rows
+vec4 GetRandomNumber(void){
+    vec2 noisecoords;
+    noisecoords.x = float(frameCounter) / float(noiseTextureResolution);
+    // Do a bunch of modulo stuff to loop through all rows
+    // But im lazy
+    return texture2D(noisetex, noisecoords);
+}
 
 #endif

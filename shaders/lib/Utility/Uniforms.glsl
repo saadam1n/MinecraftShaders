@@ -1,5 +1,5 @@
-#ifndef UNIFORMS_GLSL
-#define UNIFORMS_GLSL 1
+#ifndef UTILITY_UNIFORMS_GLSL
+#define UTILITY_UNIFORMS_GLSL 1
 
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;

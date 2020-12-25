@@ -3,8 +3,8 @@
 varying vec3 Normal;
 flat varying float Masks;
 
-#include "lib/commonfuncs.glsl"
-#include "lib/Misc/Masks.glsl"
+#include "lib/Utility/Uniforms.glsl"
+#include "lib/Utility/TextureSampling.glsl"
 
 void main(){
     vec4 color = SampleTextureAtlas(gl_TexCoord[0].st) * gl_Color;
