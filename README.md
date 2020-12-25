@@ -28,3 +28,12 @@ TODO list:
 - Volumetric lighting has an unintended cloud layer above the player
 - VL also is barely visible in small scenes and maybe a bit too much in large scenes
 - There is no fog for parts of the world behind the player due to the forward mie scattering that takes place in VL
+# Works used
+This shader is based of the works of:
+- Continuum Shader Tutorial
+- Continuum Shaders
+- SEUS V10.1
+- KUDA V6.5.56
+- [Scratch A Pixel - Simulating the Colors of the Sky](https://www.scratchapixel.com/lessons/procedural-generation-virtual-worlds/simulating-sky/simulating-colors-of-the-sky)
+- [Oskar Elek - Rendering Parametrizable Planetary Atmospheres with Multiple Scattering in Real-Time](http://www.klayge.org/material/4_0/Atmospheric/Rendering%20Parametrizable%20Planetary%20Atmospheres%20with%20Multiple%20Scattering%20in%20Real-Time.pdf) 
+- [Learn OpenGL](https://learnopengl.com/)
