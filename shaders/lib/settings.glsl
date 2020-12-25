@@ -27,7 +27,7 @@ const float ShadowQualitySamplesPerSide =  (2*(SHADOW_SAMPLES * SHADOW_QUALITY)+
 const float ShadowQualityArea = ShadowQualitySamplesPerSide * ShadowQualitySamplesPerSide;
 const float ShadowArea = ShadowSamplesPerSide * ShadowSamplesPerSide;
 
-const int noiseTextureResolution = 256;
+const int noiseTextureResolution = 512;
 
 const bool generateShadowMipmap = false;
 const float shadowIntervalSize 	= 4.0f;
@@ -37,7 +37,7 @@ const vec3 TorchEmitColor = vec3(1.0, 0.57, 0.3);;
 
 const float ShadowDepthCompressionFactor = 1.0f;
 
-const vec4 colortex5ClearColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+const vec4 colortex2ClearColor = vec4(0.0f, 0.0f, 1.0f, 0.0f);
 
 #define SHIFTING_RAIN_AMPLITUDE 1.5f
 #define WEATHER_DENSITY 1.0f // How fast and small weather particles (rain and snow) are [0.25f 0.5f 0.75f 1.0f 1.25f 1.5f 1.75 2.0f]
@@ -49,7 +49,7 @@ const float drynessHalfLife = 0.0001f;
 #define BLOOM_SAMPLES 16.0f
 
 const float BloomSamplesPerSide = (2.0f * BLOOM_SAMPLES + 1.0f);
-const float BloomStandardDeviation = BloomSamplesPerSide - 10.0f;
+const float BloomStandardDeviation = 10;
 
 #define VOLUMETRIC_LIGHTING_STEPS 64.0f
 #define VOLUMETRIC_OPTICAL_DEPTH_STEPS 64.0f

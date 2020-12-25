@@ -2,4 +2,4 @@
 
 #define GAUSSIAN_BLOOM_Y
 
-#include "util/gaussianbloom.glsl"
+#include "lib/gaussianbloom.glsl"

@@ -1,6 +1,6 @@
 #version 120
 
-#include "util/commonfuncs.glsl"
+#include "lib/commonfuncs.glsl"
 
 //Taken from https://github.com/CesiumGS/cesium/blob/master/Source/Shaders/Builtin/Functions/saturation.glsl
 vec3 Saturation(vec3 rgb, float adjustment) {
@@ -46,25 +46,25 @@ vec3 ACESFilmicTonemapping(vec3 color) {
 const float FilmGrainStrength = 0.00325f;
 
 vec3 ComputeFilmGrain(in vec3 color){
-	vec3 ColorOffset = (texture2D(noisetex,  gl_TexCoord[1].st).rgb * 2.0f - 1.0f) * FilmGrainStrength;
+	vec3 ColorOffset = (texture2D(noisetex,  gl_TexCoord[1].st).rag * 2.0f - 1.0f) * FilmGrainStrength;
 	return max(color + ColorOffset, vec3(0.0f));
 }
 
-const float WaterDropletSpeed = 0.9f;
+const float WaterDropletSpeed = 0.1f;
 const float WaterSampleOffset = 0.0001f;
 
 vec2 ComputeWaterDropletCoords(void){
-	vec2 WaterSampleCoords = vec2(gl_TexCoord[0].s, gl_TexCoord[0].t + WaterDropletSpeed * frameTimeCounter) * 4.0f;
+	vec2 WaterSampleCoords = vec2(gl_TexCoord[0].s, gl_TexCoord[0].t + WaterDropletSpeed * frameTimeCounter);
 	// Now compute an offset
-	float WaterCenter = PerlinNoise(WaterSampleCoords);
-	float WaterLeft =  PerlinNoise(vec2(WaterSampleCoords.x - WaterSampleOffset, WaterSampleCoords.y));
-	float WaterUp = PerlinNoise(vec2(WaterSampleCoords.x, WaterSampleCoords.y + WaterSampleOffset));
+	float WaterCenter = texture2D(noisetex, WaterSampleCoords).a;
+	float WaterLeft =  texture2D(noisetex, vec2(WaterSampleCoords.x - WaterSampleOffset, WaterSampleCoords.y)).a;
+	float WaterUp = texture2D(noisetex, vec2(WaterSampleCoords.x, WaterSampleCoords.y + WaterSampleOffset * 4.0f)).a;
 	vec2 WaterCoords = gl_TexCoord[0].st;
 	if((WaterCenter + WaterLeft + WaterUp) / 3.0f > 0.2f){
 		vec3 WaterNormal;
 		WaterNormal.r = WaterCenter - WaterLeft;
 		WaterNormal.g = WaterCenter - WaterUp;
-		WaterNormal.b = sqrt(1.0f - length(WaterNormal.rg));
+		WaterNormal.b = sqrt(1.0f - dot(WaterNormal.rg, WaterNormal.rg));
 		WaterNormal = normalize(WaterNormal);
 		WaterCoords += WaterNormal.xz / 50.0f;
 	}
@@ -74,7 +74,7 @@ vec2 ComputeWaterDropletCoords(void){
 void main(){
 	vec2 TexCoords = ComputeWaterDropletCoords();
     vec4 color = texture2D(colortex7, TexCoords);
-	color.rgb = Saturation(color.rgb, 1.1f);
+	color.rgb = Saturation(color.rgb, 1.15f) * 0.4545f;
 	//color.rgb *= 3.0f;
     //Apply tonemap 
 	color.rgb = ACESFilmicTonemapping(color.rgb);
@@ -84,7 +84,7 @@ void main(){
 	#ifdef DEBUG
 	color = texture2D(debugTex,  gl_TexCoord[0].st);
 	#endif
-	//color.rgb = vec3(PerlinNoise(TexCoords));
+	//color.rgb = texture2D(noisetex, gl_TexCoord[0].st).rga;
 	color.rgb = pow(color.rgb, vec3(1.0f / 2.2f));
     gl_FragColor = color;
 }

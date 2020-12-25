@@ -1,10 +1,13 @@
 #version 120
 
-attribute vec4 mc_midTexCoord;
+attribute vec3 mc_Entity;
+attribute vec2 mc_midTexCoord;
 
 varying vec3 Normal;
+varying float Masks;
 
-#include "util/uniforms.glsl"
+#include "lib/uniforms.glsl"
+#include "lib/misc/masks.glsl"
 
 #define SHIFTING_RAIN_STYLE 0 // The style of the rain shift. 0 = No rain shift. 1 = My rain shift. 2 = Super shader V5.0 rain shift. [0 1 2]
 
@@ -61,6 +64,7 @@ void main(){
     #if (SHIFTING_RAIN_STYLE == 2)
     ShiftingRainSuperShaders();
     #endif
+    Masks = CompressMaskStruct(ConstructMaskStruct(mc_Entity.x));
     Normal = gl_Normal;
     gl_TexCoord[0].st = gl_MultiTexCoord0.st * WEATHER_DENSITY;
     gl_TexCoord[1].st = mat2(gl_TextureMatrix[1]) * gl_MultiTexCoord1.st;

@@ -7,6 +7,9 @@
 #include "uniforms.glsl"
 #include "structures.glsl"
 
+
+const float SunSpotSize = 0.999;
+
 // TODO: loops through all rows
 vec4 GetRandomNumber(void){
     vec2 noisecoords;
@@ -282,7 +285,7 @@ float CalculateDensityOzone(float h){
 // c\left(\frac{1.0}{\frac{\cosh\left(30-x\right)}{3}}\cdot\exp\left(-\frac{x}{7.994}\right)\right)
 // x in both functions is in kilometers
 // I'd galdy appreciate if someone finds the correct function or a more accurate function
-vec3 CalculateAtmosphericDensity(float height){
+vec3 CalculateAtmosphericDensity(float height) {
     vec3 Density;
     Density.xy = exp(-height / vec2(ScaleHeightRayleigh, ScaleHeightMie));
     float x = height / KM_SIZE; // The function squares x, and x is supposed to be in km
@@ -293,6 +296,18 @@ vec3 CalculateAtmosphericDensity(float height){
     x *= 0.07f;
     Density.z = x;
     return Density;
+}
+
+float CalculateAltitude(in vec3 pos){
+    return length(pos) - EarthRadius;
+}
+
+vec3 CalculateAtmosphericDensity(vec3 pos) {
+    return CalculateAtmosphericDensity(CalculateAltitude(pos));
+}
+
+vec3 CalculateAtmosphericDensity(in Ray odray, in float pos, in float len){
+    return CalculateAtmosphericDensity(odray.Origin + odray.Direction * (pos + 0.5f * len));
 }
 
 float PhaseRayleigh(in float cosTheta){
@@ -317,7 +332,8 @@ float PhaseMie(in vec3 v, in vec3 l){
     return PhaseMie(dot(v, l));
 }
 
-const vec3 ScatteringRayleigh = vec3(5.5e-6, 13.0e-6, 22.4e-6);
+// alt val: vec3(5.5e-6, 13.0e-6, 22.4e-6) 
+const vec3 ScatteringRayleigh = vec3(5.8e-6, 13.5e-6, 33.1e-6);
 const vec3 AbsorptionRayleigh = vec3(0.0f); // Negligible 
 const vec3 ExtinctionRayleigh = ScatteringRayleigh + AbsorptionRayleigh;
 const float ScatteringMie = 21e-6;
@@ -326,14 +342,14 @@ const float ExtinctionMie = ScatteringMie + AbsorptionMie;
 const vec3 ScatteringOzone = vec3(0.0f); // Ozone does not scatter light
 const vec3 AbsorptionOzone = vec3(2.04e-5, 4.97e-5, 1.95e-6);
 const vec3 ExtinctionOzone = ScatteringOzone + AbsorptionOzone;
-const float SunBrightness = 20.0f;
+const float SunBrightness = 40.0f;
 const vec3 SunColor = vec3(1.0f, 1.0f, 1.0f) * SunBrightness;
 const float SunColorBrightness = 0.3f;
 
 // Thes values were the best all rounder for both performance and quality
 // I will add a slider for both of these (if I knew how) so users with better computers can get the sky the can acheive
-#define INSCATTERING_STEPS 8
-#define OPTICAL_DEPTH_STEPS 2
+#define INSCATTERING_STEPS 8 // Optical depth steps [ 2 6 8 12 16 24 32 48 64 128]
+#define OPTICAL_DEPTH_STEPS 8 // Optical depth steps [ 2 6 8 12 16 24 32 48 64 128]
 
 // Optical depth:
 // x - rayleigh
@@ -344,11 +360,12 @@ vec3 ComputeOpticalDepth(Ray AirMassRay, float pointdistance) {
     vec3 OpticalDepth = vec3(0.0f);
     float RayMarchStepLength = pointdistance / float(OPTICAL_DEPTH_STEPS);
     float RayMarchPosition = 0.0f;
-    for(int Step = 0; Step < OPTICAL_DEPTH_STEPS; Step++){
-        vec3 SampleLocation = AirMassRay.Origin + AirMassRay.Direction * (RayMarchPosition + 0.5f * RayMarchStepLength);
-        float Height = distance(SampleLocation, vec3(0.0f)) - EarthRadius;
-        OpticalDepth += CalculateAtmosphericDensity(Height);
+    vec3 CurrentDensity = CalculateAtmosphericDensity(AirMassRay, RayMarchPosition, RayMarchStepLength);
+    for(int Step = 1; Step < OPTICAL_DEPTH_STEPS; Step++){
+        vec3 NextDensity = CalculateAtmosphericDensity(AirMassRay, RayMarchPosition, RayMarchStepLength);
+        OpticalDepth += (CurrentDensity + NextDensity) / 2.0f;
         RayMarchPosition += RayMarchStepLength;
+        CurrentDensity = NextDensity;
     }
     OpticalDepth *= RayMarchStepLength;
     return OpticalDepth;
@@ -357,8 +374,8 @@ vec3 ComputeOpticalDepth(Ray AirMassRay, float pointdistance) {
 vec3 Transmittance(in vec3 OpticalDepth){
     vec3 Tau = 
         OpticalDepth.x * ExtinctionRayleigh +
-        OpticalDepth.y * ExtinctionMie +
-        OpticalDepth.z * ExtinctionOzone;
+        OpticalDepth.y * ExtinctionMie      +
+        OpticalDepth.z * ExtinctionOzone    ;
     //gl_FragData[1].rgb = exp(-TotalOpticalDepth);
     return exp(-Tau);
 }
@@ -370,42 +387,96 @@ vec3 ComputeTransmittance(Ray ray, float pointdistance) {
 // TODO: Optimize this 
 // Also switch to trapezoidal integration
 
-vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, inout vec3 viewtransmittance) {
+//#define ATMOSPHERE_CAMERA_HEIGHT
+
+vec3 GetCameraPositionEarth(void){
+    #ifdef ATMOSPHERE_CAMERA_HEIGHT
+    return vec3(0.0f, EarthRadius + max(5.0f * (cameraPosition.y-64.0f), 0.0f), 0.0f);
+    #else
+    return vec3(0.0f, EarthRadius, 0.0f);
+    #endif
+}
+
+void ComputeAtmosphericScattering(inout Ray ViewRay, in vec3 light, inout vec3 AccumRayleigh, inout vec3 AccumMie, inout vec3 ViewOpticalDepth, inout vec3 AccumViewOpticalDepth, inout float RayMarchPosition, inout float RayMarchStepLength) {
+    vec3 SampleLocation = ViewRay.Origin + ViewRay.Direction * (RayMarchPosition + 0.5f * RayMarchStepLength);
+    vec3 CurrentDensity = CalculateAtmosphericDensity(SampleLocation);
+    ViewOpticalDepth += CurrentDensity * RayMarchStepLength;
+    vec3 ViewTransmittance = Transmittance(ViewOpticalDepth + AccumViewOpticalDepth);
+    float LightLength = RaySphereIntersect(SampleLocation, light, AtmosphereRadius);
+    Ray LightRay;
+    LightRay.Origin    = SampleLocation;
+    LightRay.Direction = light         ;
+    vec3 TransmittedSunLight = ComputeTransmittance(LightRay, LightLength) * ViewTransmittance;
+    AccumRayleigh += TransmittedSunLight * CurrentDensity.x;
+    AccumMie      += TransmittedSunLight * CurrentDensity.y;
+    RayMarchPosition += RayMarchStepLength;
+}
+
+vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 viewopticaldepth) {
     //return vec3(1.0f);
     //dir.y = max(dir.y, 0.1f);
     //dir = normalize(dir);
-    vec3 ViewPos = vec3(0.0f, EarthRadius, 0.0f);
+    vec3 ViewPos = GetCameraPositionEarth();
     float AtmosphereDistance = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
     vec3 AtmosphereIntersectionLocation = ViewPos + dir * AtmosphereDistance;
     vec3 AccumRayleigh = vec3(0.0f), AccumMie = vec3(0.0f);
     // TODO: precompute cos theta^2 for both functions
     float CosTheta = dot(light, dir);
-    vec3 ScatteringStrengthRayleigh = PhaseRayleigh(CosTheta) * ScatteringRayleigh;
-    float ScatteringStrengthMie = PhaseMie(CosTheta) * ScatteringMie;
+    vec3  ScatteringStrengthRayleigh = PhaseRayleigh(CosTheta) * ScatteringRayleigh;
+    float ScatteringStrengthMie      = PhaseMie(CosTheta)      * ScatteringMie     ;
     float RayMarchStepLength = AtmosphereDistance / float(INSCATTERING_STEPS);
     float RayMarchPosition = 0.0f;
     vec3 ViewOpticalDepth = vec3(0.0f); 
-    vec3 ViewTransmittance = vec3(1.0f);
-    for(int InscatteringStep = 0; InscatteringStep < INSCATTERING_STEPS; InscatteringStep++){
-        vec3 SampleLocation = ViewPos + dir * (RayMarchPosition + 0.5f * RayMarchStepLength);
-        float CurrentAltitude = distance(SampleLocation, vec3(0.0f)) - EarthRadius;
-        vec3 CurrentDensity = CalculateAtmosphericDensity(CurrentAltitude);
-        ViewOpticalDepth += CurrentDensity * RayMarchStepLength;
-        ViewTransmittance *= Transmittance(ViewOpticalDepth);
-        float LightLength = RaySphereIntersect(SampleLocation, light, AtmosphereRadius);
-        Ray LightRay;
-        LightRay.Origin = SampleLocation;
-        LightRay.Direction = light;
-        vec3 TransmittedSunLight = ComputeTransmittance(LightRay, LightLength) * ViewTransmittance;
-        vec3 TransmittedAccumSunLight = vec3(1.0f);
-        vec3 CurrentAltitudeScatteringStrengthRayleigh = CurrentDensity.x * ScatteringStrengthRayleigh;
-        float CurrentAltitudeScatteringStrengthMie     = CurrentDensity.y * ScatteringStrengthMie;
-        AccumRayleigh += TransmittedSunLight * TransmittedAccumSunLight * CurrentAltitudeScatteringStrengthRayleigh * RayMarchStepLength;
-        AccumMie      += TransmittedSunLight * TransmittedAccumSunLight * CurrentAltitudeScatteringStrengthMie      * RayMarchStepLength;
-        RayMarchPosition += RayMarchStepLength;
+    Ray ViewRay;
+    ViewRay.Origin = ViewPos;
+    ViewRay.Direction = dir;
+    vec3 ViewDensity = CalculateAtmosphericDensity(ViewRay.Origin) * RayMarchStepLength;
+    vec3 CurrentAccumRayleigh = vec3(0.0f), CurrentAccumMie = vec3(0.0f);
+    vec3 CurrentOpticalDepth = vec3(0.0f);
+    ComputeAtmosphericScattering(ViewRay, light, CurrentAccumRayleigh, CurrentAccumMie, CurrentOpticalDepth, ViewOpticalDepth, RayMarchPosition, RayMarchStepLength);
+    ViewOpticalDepth += (ViewDensity + CurrentOpticalDepth) / 2.0f;
+    for(int InscatteringStep = 1; InscatteringStep < INSCATTERING_STEPS; InscatteringStep++){
+        vec3 NextAccumRayleigh = vec3(0.0f);
+        vec3 NextAccumMie      = vec3(0.0f);
+        vec3 NextOpticalDepth  = vec3(0.0f);
+        ComputeAtmosphericScattering(ViewRay, light, NextAccumRayleigh, NextAccumMie, NextOpticalDepth, ViewOpticalDepth, RayMarchPosition, RayMarchStepLength);
+        AccumRayleigh    += (NextAccumRayleigh + CurrentAccumRayleigh) / 2.0f;
+        AccumMie         += (NextAccumMie      + CurrentAccumMie     ) / 2.0f;
+        ViewOpticalDepth += (NextOpticalDepth  + CurrentOpticalDepth ) / 2.0f;
+        CurrentAccumRayleigh = NextAccumRayleigh;
+        CurrentAccumMie      = NextAccumMie     ;
+        CurrentOpticalDepth  = NextOpticalDepth ;
     }
-    viewtransmittance = ViewTransmittance;
-    return SunColor * (AccumRayleigh + AccumMie);
+    viewopticaldepth = ViewOpticalDepth;
+    return SunColor * (AccumRayleigh * ScatteringStrengthRayleigh + AccumMie * ScatteringStrengthMie) * RayMarchStepLength;
+}
+
+vec3 saturate(vec3 val);
+
+vec3 ComputeSunColor(in vec3 light, in vec3 dir){
+    if(dot(light, dir) < SunSpotSize){
+        return vec3(0.0f);
+    }
+    vec3 ViewPos =  GetCameraPositionEarth();
+    float dist = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
+    Ray SunRay;
+    SunRay.Origin = ViewPos;
+    SunRay.Direction = dir;
+    vec3 Transmittance = ComputeTransmittance(SunRay, dist);
+    // The saturate breaks the physical basis of this function
+    // But gives us nice orange color without too white during the day
+    return saturate(Transmittance * SunColor);
+}
+
+// Passing in ViewTransmittance did not work
+vec3 ComputeSunColor(in vec3 light, in vec3 dir, in vec3 opticaldepth){
+    if(dot(light, dir) < SunSpotSize){
+        return vec3(0.0f);
+    }
+    vec3 transmittance = Transmittance(opticaldepth);
+    // The saturate breaks the physical basis of this function
+    // But gives us nice orange color without too white during the day
+    return saturate(transmittance * SunColor);
 }
 
 vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
@@ -423,9 +494,6 @@ vec3 ComputeInaccurateAtmosphere(in vec3 light, in vec3 dir, out vec3 sun) {
     float Mie = pow(cosTheta * 0.5f + 0.5f, 42.0f) * 0.3f;
     return Rayleigh + Mie;
 }
-
-
-const float SunSpotSize = 0.999;
 
 vec3 ComputeInaccurateSun(in vec3 light, in vec3 dir, in vec3 absorption) {
     if(dot(light, dir) < SunSpotSize){
@@ -447,34 +515,6 @@ vec3 ComputeAtmosphereColor(in vec3 light, in vec3 dir, out vec3 aux){
 vec3 ComputeAtmosphereColor(in vec3 light, in vec3 dir){
     vec3 temp;
     return ComputeAtmosphereColor(light, dir, temp);
-}
-
-
-vec3 saturate(vec3 val);
-
-
-vec3 ComputeSunColor(in vec3 light, in vec3 dir){
-    if(dot(light, dir) < SunSpotSize){
-        return vec3(0.0f);
-    }
-    vec3 ViewPos = vec3(0.0f, EarthRadius, 0.0f);
-    float dist = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
-    Ray SunRay;
-    SunRay.Origin = ViewPos;
-    SunRay.Direction = dir;
-    vec3 Transmittance = ComputeTransmittance(SunRay, dist);
-    // The saturate breaks the physical basis of this function
-    // But gives us nice orange color without too white during the day
-    return saturate(Transmittance * SunColor);
-}
-
-vec3 ComputeSunColor(in vec3 light, in vec3 dir, in vec3 transmittance){
-    if(dot(light, dir) < SunSpotSize){
-        return vec3(0.0f);
-    }
-    // The saturate breaks the physical basis of this function
-    // But gives us nice orange color without too white during the day
-    return saturate(transmittance * SunColor);
 }
 
 vec4 CalculateShadow(in sampler2D ShadowDepth, in vec3 coords){ 
@@ -844,7 +884,15 @@ vec4 BicubicTexture(in sampler2D tex, in vec2 coord)
 }
 
 vec4 SampleTextureAtlas(in vec2 coords){
-    return texture2D(texture, coords);
+    return pow(texture2D(texture, coords), vec4(0.454545f));
+}
+
+vec4 SampleTextureAtlas(in vec2 coords, float bias){
+    return pow(texture2D(texture, coords, bias), vec4(0.454545f));
+}
+
+vec4 SampleTextureAtlasLOD(in vec2 coords, float lod){
+    return pow(texture2DLod(texture, coords, lod), vec4(0.454545f));
 }
 
 void CreateSurfaceStructForward(in vec3 fragcoord, in vec3 normal, in vec3 l, out SurfaceStruct Surface){
@@ -979,7 +1027,7 @@ vec3 ComputeFog(in vec3 light, in vec3 dir, in vec3 color, in float dist){
 }
 
 void ComputeColor(in SurfaceStruct Surface, inout ShadingStruct Shading){
-    vec3 Lighting = Shading.Sun + Shading.Torch + Shading.Sky;
+    vec3 Lighting = max(Shading.Sun, vec3(0.0f)) + Shading.Torch + Shading.Sky;
     Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f);// + vec4(Shading.Volumetric, 0.0f);
     //Shading.Color.rgb = ComputeFog(vec3(0.0f), vec3(0.0f), Shading.Color.rgb, 100);
     //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st);
@@ -1004,46 +1052,6 @@ vec3 GetLightColor(void){
     vec3 SunColor = ComputeSunColor(SunDirection, SunDirection) + ComputeAtmosphereColor(SunDirection, SunDirection);
     vec3 MoonColor = vec3(0.1f, 0.15f, 0.9f);
     return SunColor * 0.7f;
-}
-
-//	Classic Perlin 3D Noise 
-//	by Stefan Gustavson
-//
-vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
-vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
-vec2 fade(vec2 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}
-float PerlinNoise(vec2 P){
-  vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
-  vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
-  Pi = mod(Pi, 289.0); // To avoid truncation effects in permutation
-  vec4 ix = Pi.xzxz;
-  vec4 iy = Pi.yyww;
-  vec4 fx = Pf.xzxz;
-  vec4 fy = Pf.yyww;
-  vec4 i = permute(permute(ix) + iy);
-  vec4 gx = 2.0 * fract(i * 0.0243902439) - 1.0; // 1/41 = 0.024...
-  vec4 gy = abs(gx) - 0.5;
-  vec4 tx = floor(gx + 0.5);
-  gx = gx - tx;
-  vec2 g00 = vec2(gx.x,gy.x);
-  vec2 g10 = vec2(gx.y,gy.y);
-  vec2 g01 = vec2(gx.z,gy.z);
-  vec2 g11 = vec2(gx.w,gy.w);
-  vec4 norm = 1.79284291400159 - 0.85373472095314 * 
-    vec4(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11));
-  g00 *= norm.x;
-  g01 *= norm.y;
-  g10 *= norm.z;
-  g11 *= norm.w;
-  float n00 = dot(g00, vec2(fx.x, fy.x));
-  float n10 = dot(g10, vec2(fx.y, fy.y));
-  float n01 = dot(g01, vec2(fx.z, fy.z));
-  float n11 = dot(g11, vec2(fx.w, fy.w));
-  vec2 fade_xy = fade(Pf.xy);
-  vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
-  float n_xy = mix(n_x.x, n_x.y, fade_xy.y);
-  float noise = 2.3 * n_xy;
-  return pow(noise * 0.5f + 0.5f, 3.0f);
 }
 
 #endif

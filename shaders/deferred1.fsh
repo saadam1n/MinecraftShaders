@@ -5,17 +5,18 @@ varying vec3 ViewSpaceViewDir;
 flat varying vec3 LightDirection;
 flat varying vec3 LightColor;
 
-#include "util/commonfuncs.glsl"
+#include "lib/commonfuncs.glsl"
+#include "lib/misc/masks.glsl"
 
 void main(){
-    float DeferredFlag = texture2D(colortex2, texcoords).b;
+    float Masks = texture2D(colortex2, texcoords).b;
     vec4 Color;
-    if(DeferredFlag == 0.0f){ // If DeferredFlag is 0.0f it is part of the sky
+    if(UnpackMask(Masks, SKY_BIT)){ // If DeferredFlag is 0.0f it is part of the sky
         // Init to 0
         Color = vec4(0.0f);
         vec3 Direction = normalize(mat3(gbufferModelViewInverse) * ViewSpaceViewDir);
         #ifdef PHYSICALLY_BASED_ATMOSPHERE
-        vec3 OpticalDepth;
+        vec3 OpticalDepth = vec3(0.0f);
         Color.rgb += ComputeAtmosphericScattering(LightDirection, Direction, OpticalDepth);
         Color.rgb += ComputeSunColor(LightDirection, Direction, OpticalDepth);
         #else
@@ -33,6 +34,7 @@ void main(){
     } else {
         Color = texture2D(colortex7, texcoords);
     }
+    //Color.rgb = vec3(float(UnpackMask(Masks, SKY_BIT)));
     //Color.rgb = vec3(DeferredFlag);
     /* DRAWBUFFERS:7 */
     gl_FragData[0] = Color;

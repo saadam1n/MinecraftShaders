@@ -1,6 +1,6 @@
 #version 120
 
-#include "util/commonfuncs.glsl"
+#include "lib/commonfuncs.glsl"
 
 void main(){
     gl_Position = ftransform();

@@ -4,7 +4,7 @@ varying vec3 Normal;
 flat varying vec3 LightDirection;
 flat varying vec3 CurrentSunColor;
 
-#include "util/commonfuncs.glsl"
+#include "lib/commonfuncs.glsl"
 
 void main() {
     gl_Position = ftransform();
