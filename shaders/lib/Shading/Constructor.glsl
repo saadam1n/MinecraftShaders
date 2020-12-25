@@ -48,7 +48,7 @@ SurfaceStruct ConstructSurfaceStructDeferred(in vec2 texcoords, in vec3 l){
     SurfaceStruct Surface;
 
     Surface.Diffuse = texture2D(colortex0, texcoords);
-    Surface.Normal = UnpackNormal(texture2D(colortex1, texcoords).rg);
+    Surface.Normal = texture2D(colortex1, texcoords).rgb * 2.0f - 1.0f;
 
     vec2 LightMap = texture2D(colortex2, texcoords).st; 
     Surface.Torch = LightMap.x;

@@ -31,15 +31,4 @@ MaskStruct DecompressMaskStruct(in float fmasks){
     return UnpackedMasks;
 }
 
-vec2 PackNormal(in vec3 unpackednormal){
-    return unpackednormal.xy * 0.5f + 0.5f;
-}
-
-vec3 UnpackNormal(in vec2 packednormal){
-    vec3 normal;
-    normal.xy = packednormal * 2.0f - 1.0f;
-    normal.z = sqrt(1.0f - dot(normal.xy, normal.xy));
-    return normal;
-}
-
 #endif
