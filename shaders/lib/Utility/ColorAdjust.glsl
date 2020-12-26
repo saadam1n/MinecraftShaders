@@ -83,7 +83,7 @@ vec3 ComputeExposureToneMap(in vec3 color, in float exposure){
 }
 
 float CalculateExposure(void){
-	return mix(1.0f, 0.7f, eyeBrightnessSmooth.y / 240.0f);
+	return mix(3.0f, 0.7f, eyeBrightnessSmooth.y / 240.0f);
 }
 
 #endif

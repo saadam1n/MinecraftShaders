@@ -2,6 +2,7 @@
 #define SHADING_LIGHT_MAP_GLSL
 
 #include "Structures.glsl"
+#include "../Utility/Functions.glsl"
 
 // Taken from KUDA 6.5.56
 const vec3 TorchEmitColor = vec3(1.0, 0.57, 0.3);
@@ -25,7 +26,7 @@ k=0.5
 float GetLightMapTorchApprox(in float lightmap) {
     const float K = 2.0f;
     const float P = 5.06f;
-    const float Offset = 0.02435f;
+    const float Offset = 0.0f;//0.02435f; // I removed the offset because it causes weird effects in low light conditions
     return K * pow(lightmap, P) + Offset;
 }
 
@@ -40,8 +41,8 @@ float GetLightMapSky(in float sky){
     sky = pow(sky, Power) - 0.5f * sky + Offset;
     sky /= NormalizationFactor;
     sky = pow(sky, FractionalPower);
-    // why does vscode give a green blue highligh to "Fract" (case senstitive)?
-    return sky * ScalingFactor;
+    // why does vscode give a green blue highlight to "Fract" (case senstitive)?
+    return saturate(sky * ScalingFactor);
 }
 
 // Put this in the fragment shader if the transformation curve is not straight, if not then it goes in vertex shader
