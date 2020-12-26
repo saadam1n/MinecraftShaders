@@ -12,8 +12,10 @@ void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, i
     Shading.Volumetric *= suncol;
 }
 
+const float AmbientLighting = 0.1f;
+
 void ComputeColor(in SurfaceStruct Surface, inout ShadingStruct Shading){
-    vec3 Lighting = max(Shading.Sun, vec3(0.0f)) + Shading.Torch + Shading.Sky;
+    vec3 Lighting = max(Shading.Sun, vec3(0.0f)) + Shading.Torch + Shading.Sky + mix(AmbientLighting, 0.1f * AmbientLighting, 1.0f - Surface.Sky);
     Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f);
 }
 
