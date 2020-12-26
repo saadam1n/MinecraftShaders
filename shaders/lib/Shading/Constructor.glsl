@@ -37,7 +37,7 @@ SurfaceStruct ConstructSurfaceStructForward(in vec3 fragcoord, in vec3 normal, i
     UnDivW = shadowProjection * shadowModelView * vec4(Surface.Player, 1.0f);
     Surface.ShadowClip = UnDivW.xyz;// / UnDivW.w;
     Surface.Distortion = DistortionFactor(Surface.ShadowClip.xy);
-    Surface.ShadowScreen = vec3((Surface.ShadowClip.xy * 1.0f / Surface.Distortion), Surface.ShadowClip.z) * 0.5f + 0.5f;
+    Surface.ShadowScreen = DistortShadowSample(Surface.ShadowClip);
 
     Surface.NdotL = dotunorm(Surface.Normal, l);
 
@@ -65,7 +65,7 @@ SurfaceStruct ConstructSurfaceStructDeferred(in vec2 texcoords, in vec3 l){
     UnDivW = shadowProjection * shadowModelView * vec4(Surface.Player, 1.0f);
     Surface.ShadowClip = UnDivW.xyz;// / UnDivW.w;
     Surface.Distortion = DistortionFactor(Surface.ShadowClip.xy);
-    Surface.ShadowScreen = vec3((Surface.ShadowClip.xy * 1.0f / Surface.Distortion), Surface.ShadowClip.z) * 0.5f + 0.5f;
+    Surface.ShadowScreen = DistortShadowSample(Surface.ShadowClip);
 
     Surface.NdotL = dotunorm(Surface.Normal, l);
 

@@ -3,6 +3,7 @@
 
 #include "Structures.glsl"
 #include "../Utility/Uniforms.glsl"
+#include "../Utility/Functions.glsl"
 #include "../Internal/ShaderSettings.glsl"
 #include "../Random/Noise2D.glsl"
 
@@ -42,6 +43,9 @@ vec3 ComputeVisibility(in vec3 ShadowCoord){
 vec3 ComputeShadow(in SurfaceStruct Surface){
     if(rainStrength > 0.99f){
         return vec3(0.0f);
+    }
+    if(!IsInRange(Surface.ShadowScreen, vec3(0.0f), vec3(1.0f))){
+        return vec3(1.0f);
     }
     float DiffThresh = length(Surface.ShadowScreen.xy) + 0.10f;
     DiffThresh *= 3.0f / (shadowMapResolution / 2048.0f);
