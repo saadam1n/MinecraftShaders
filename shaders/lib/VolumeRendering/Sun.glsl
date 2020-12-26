@@ -1,8 +1,10 @@
 #ifndef VOLUME_RENDERING_SUN_GLSL
 #define VOLUME_RENDERING_SUN_GLSL 1
 
-// TODO: Optimize this 
-// Also switch to trapezoidal integration
+struct Light {
+    vec3 Color;
+    vec3 Direction;
+};
 
 vec3 ComputeSunColor(in vec3 light, in vec3 dir){
     if(dot(light, dir) < SunSpotSize){

@@ -21,6 +21,7 @@ TODO list:
 - Use a LUT for atmospheric scattering
 - Fire volume rendering
 - Use a more realistic method for plant displacement, like the one used in SEUS v10.1
+- Color temprature and more accurate sun color
 # Known issues
 - Atmosphere looks bad and isn't completely physically based
 - Translucent items do not have proper forward rendering when dropped
@@ -29,6 +30,8 @@ TODO list:
 - Volumetric lighting has an unintended cloud layer above the player
 - VL also is barely visible in small scenes and maybe a bit too much in large scenes
 - There is no fog for parts of the world behind the player due to the forward mie scattering that takes place in VL
+- The waving plants start shaking quickly when transitioning from rain to clear or clear to rain
+- Add support for oldPBR and other resource packs as well
 # Works used
 This shader is based of the works of:
 - Continuum Shader Tutorial

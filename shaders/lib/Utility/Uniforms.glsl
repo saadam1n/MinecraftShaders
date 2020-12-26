@@ -57,4 +57,7 @@ uniform vec3 fogColor;
 uniform float screenBrightness;
 uniform int frameCounter;
 
+uniform ivec2 eyeBrightness;
+uniform ivec2 eyeBrightnessSmooth;  
+
 #endif

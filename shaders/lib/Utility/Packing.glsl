@@ -1,6 +1,8 @@
 #ifndef UTILITY_PACKING_GLSL
 #define UTILITY_PACKING_GLSL
 
+#extension GL_EXT_gpu_shader4 : enable
+
 #include "../Misc/Masks.glsl"
 
 int PackMask(bool mask, const int bit){

@@ -4,6 +4,7 @@
 #include "Phase.glsl"
 #include "SunProperties.glsl"
 #include "../Geometry/Ray.glsl"
+#include "../Utility/Uniforms.glsl"
 
 #define KM_SIZE 1000.0f
 

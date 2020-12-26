@@ -78,4 +78,12 @@ vec2 ComputeWaterDropletCoords(void){
 	return mix(gl_TexCoord[0].st, WaterCoords, rainStrength);
 }
 
+vec3 ComputeExposureToneMap(in vec3 color, in float exposure){
+	return 1.0f - exp(-exposure * color);
+}
+
+float CalculateExposure(void){
+	return mix(1.0f, 0.7f, eyeBrightnessSmooth.y / 240.0f);
+}
+
 #endif

@@ -48,14 +48,17 @@ vec4 ShiftedRainKUDA6556(void){
     return glPos;
 }
 
-#if (SHIFTING_RAIN_STYLE == 0)
-#define WeatherTransform ShiftedRainKUDA6556
-#endif
-#if (SHIFTING_RAIN_STYLE == 1)
-#define WeatherTransform ShiftingRainStandard
-#endif
-#if (SHIFTING_RAIN_STYLE == 2)
-#define WeatherTransform ShiftingRainSuperShaders
-#endif
+vec4 WeatherTransform(void){
+    #if (SHIFTING_RAIN_STYLE == 0)
+    return ShiftingRainStandard();
+    #endif
+    #if (SHIFTING_RAIN_STYLE == 1)
+    return ShiftingRainSuperShaders();
+    #endif
+    #if (SHIFTING_RAIN_STYLE == 2)
+    return ShiftedRainKUDA6556();
+    #endif
+}
+
 
 #endif

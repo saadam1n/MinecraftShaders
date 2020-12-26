@@ -2,9 +2,13 @@
 
 #include "lib/Internal/OptifineSettings.glsl"
 #include "lib/Utility/Uniforms.glsl"
+//#include "lib/Utility/ColorAdjust.glsl"
+
+//flat varying float Exposure;
 
 void main(){
     vec3 BloomColor = texture2D(colortex7, gl_TexCoord[0].st).rgb;
+    //BloomColor.rgb = ComputeExposureToneMap(BloomColor.rgb, Exposure);
     // Taken from learnopengl.com
     float Brightness = dot(BloomColor.rgb, vec3(0.2126, 0.7152, 0.0722));
     BloomColor.rgb *= Brightness * Brightness * Brightness * Brightness;

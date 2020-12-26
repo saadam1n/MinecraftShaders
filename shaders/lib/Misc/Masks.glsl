@@ -3,8 +3,6 @@
 
 #include "BlockID.glsl"
 
-#extension GL_EXT_gpu_shader4 : enable
-
 struct MaskStruct {
     bool Sky;
     bool Plant;
