@@ -2,6 +2,7 @@
 
 #include "lib/Internal/OptifineSettings.glsl"
 #include "lib/Utility/Uniforms.glsl"
+#include "lib/Utility/Functions.glsl"
 //#include "lib/Utility/ColorAdjust.glsl"
 
 //flat varying float Exposure;
@@ -14,5 +15,5 @@ void main(){
     BloomColor.rgb *= Brightness * Brightness * Brightness * Brightness;
     //BloomColor.rgb = 4.0f * pow(BloomColor.rgb, vec3(4.0f));
     /* DRAWBUFFERS:0 */
-    gl_FragData[0] = vec4(BloomColor, 1.0f);
+    gl_FragData[0] = vec4(saturate(BloomColor), 1.0f);
 }

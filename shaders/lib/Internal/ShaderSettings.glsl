@@ -5,8 +5,4 @@ const int shadowMapResolution = 2048; // The shadow resolution [256 512 1024 204
 const float shadowDistance = 128; // How large the shadow map is [16 32 64 128 180 256]
 const int noiseTextureResolution = 512;
 
-// Credit to xirreal#0281 for finding these values
-const int DayEnd = 12751;
-const int NightEnd = 23251;
-
 #endif

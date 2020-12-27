@@ -1,5 +1,11 @@
 #version 120
 
-#define GAUSSIAN_BLOOM_X
+const bool colortex0MipmapEnabled = true;
 
-#include "lib/Blur/Bloom.glsl"
+#include "lib/Blur/BloomTile.glsl"
+
+void main() {
+    vec3 Bloom = ComputeBloomTiles();
+    /* DRAWBUFFERS:0 */
+    gl_FragData[0].rgb = Bloom;
+}

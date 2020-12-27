@@ -19,4 +19,8 @@ bool IsInRange(in vec3 vec, in vec3 lower, in vec3 upper){
     return all(greaterThan(vec, lower)) && all(lessThan(vec, upper));
 }
 
+bool IsInRange(in vec2 vec, in vec2 lower, in vec2 upper){
+    return all(greaterThan(vec, lower)) && all(lessThan(vec, upper));
+}
+
 #endif

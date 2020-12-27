@@ -52,8 +52,8 @@ void AdjustLightMap(inout SurfaceStruct surface){
 }
 
 void ComputeLightmap(in SurfaceStruct Surface, inout ShadingStruct Shading){
-    Shading.Torch = Surface.Torch * TorchEmitColor * (1.0f - Surface.Sky);
-    Shading.Sky = Surface.Sky * mix(vec3(0.1f, 0.2f, 0.3f), vec3(1.0f), rainStrength);
+    Shading.Torch = Surface.Torch * TorchEmitColor * mix(1.0f - Surface.Sky, 1.0f, rainStrength);
+    Shading.Sky = Surface.Sky * vec3(0.2f, 0.35f, 0.45f);
 }
 
 
