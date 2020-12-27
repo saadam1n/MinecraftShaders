@@ -88,4 +88,11 @@ float CalculateExposure(void){
 	return SkyExposure;
 }
 
+// Probably taken from contiuum tutorial
+const float UnderExposure = 0.5f;
+const float OverExposure = 1.5f;
+vec3 HighDynamicRange(in vec3 color){
+	return mix(color * OverExposure, color * UnderExposure, color);
+}
+
 #endif

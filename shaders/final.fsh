@@ -7,6 +7,8 @@
 flat varying float inRain;
 flat varying float Exposure;
 
+#define HIGH_DYNAMIC_RANGE
+
 void main(){
 	vec2 TexCoords;
 	if(inRain == 1.0f){
@@ -16,6 +18,10 @@ void main(){
 	}
     vec4 color = texture2D(colortex7, TexCoords);
 	color.rgb = ComputeExposureToneMap(color.rgb, Exposure);
+	#ifdef HIGH_DYNAMIC_RANGE
+	//if(gl_FragCoord.x > viewWidth / 2) // Uncomment to see side by side comparison
+	color.rgb = HighDynamicRange(color.rgb);
+	#endif
 	// saturation boosting is never the way to do it
 	//color.rgb = Saturation(color.rgb, 1.3f);
 	//color.rgb *= 3.0f;
