@@ -20,6 +20,8 @@ SurfaceStruct ConstructSurfaceStructForward(in vec3 fragcoord, in vec3 normal, i
     SurfaceStruct Surface;
 
     Surface.Diffuse = SampleTextureAtlas(gl_TexCoord[0].st);
+    // If the alpha channel does not have the gamma backed into it, someone please let me knwo
+    Surface.Diffuse.rgba = pow(Surface.Diffuse.rgba, vec4(2.2f));
     Surface.Normal = normal;
 
     vec2 LightMap = gl_TexCoord[1].st; 
@@ -48,6 +50,7 @@ SurfaceStruct ConstructSurfaceStructDeferred(in vec2 texcoords, in vec3 l){
     SurfaceStruct Surface;
 
     Surface.Diffuse = texture2D(colortex0, texcoords);
+    Surface.Diffuse.rgb = pow(Surface.Diffuse.rgb, vec3(2.2f));
     Surface.Normal = texture2D(colortex1, texcoords).rgb * 2.0f - 1.0f;
 
     vec2 LightMap = texture2D(colortex2, texcoords).st; 
