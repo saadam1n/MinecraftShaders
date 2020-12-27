@@ -23,6 +23,11 @@ TODO list:
 - Use a more realistic method for plant displacement, like the one used in SEUS v10.1
 - Color temprature and more accurate sun color
 - Add support for oldPBR and other resource packs as well
+- Proper day night transition
+- Adjusted values for torch and sky lightmap
+- Star rendering
+- Additional tonemap support
+- Fog
 # Known issues
 - ~~Atmosphere looks bad and isn't completely physically based~~
 - Translucent items do not have proper forward rendering when dropped

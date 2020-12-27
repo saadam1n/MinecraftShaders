@@ -56,6 +56,7 @@ vec3 GetSkyTopColor(void){
 const float StarThreshold = 0.99f;
 
 vec3 ComputeStars(in vec3 dir){
+    // TODO: find a good way to get the x variable without inverse trig functions
     vec2 NoiseCoord = dir.xy;
     float StarNoise = texture2D(noisetex, NoiseCoord).r;
     return vec3(step(StarThreshold, StarNoise));
