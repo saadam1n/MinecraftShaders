@@ -53,4 +53,12 @@ vec3 GetSkyTopColor(void){
     return mix(vec3 (Red, Green, Blue), skyColor, 0.5f);
 }
 
+const float StarThreshold = 0.99f;
+
+vec3 ComputeStars(in vec3 dir){
+    vec2 NoiseCoord = dir.xy;
+    float StarNoise = texture2D(noisetex, NoiseCoord).r;
+    return vec3(step(StarThreshold, StarNoise));
+}
+
 #endif

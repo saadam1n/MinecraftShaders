@@ -16,9 +16,12 @@ void main(){
 	}
     vec4 color = texture2D(colortex7, TexCoords);
 	color.rgb = ComputeExposureToneMap(color.rgb, Exposure);
-	color.rgb = Saturation(color.rgb, 1.1f);
+	// saturation boosting is never the way to do it
+	//color.rgb = Saturation(color.rgb, 1.3f);
 	//color.rgb *= 3.0f;
     //Apply tonemap 
+	// I like ACES filmic tonemapping due to the contrast increase without making everything dark
+	// TODO: add options for other tonemaps
 	color.rgb = ACESFilmicTonemapping(color.rgb);
 	#ifdef FILM_GRAIN
 	color.rgb = ComputeFilmGrain(color.rgb);

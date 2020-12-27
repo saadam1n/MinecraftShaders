@@ -16,7 +16,11 @@ vec3 GetLightColor(void){
     vec3 SunDirection = GetSunMoonDirection(sunPosition);
     vec3 SunColor = ComputeSunColor(SunDirection, SunDirection) + ComputeAtmosphereColor(SunDirection, SunDirection);
     vec3 MoonColor = vec3(0.1f, 0.15f, 0.9f);
-    return saturate(SunColor * 0.7f);
+    // My guess for why materials don't look white during the day is because
+    // their BRDF is very low
+    // But I only use a simple cosTheta diffuse BRDF
+    // So I must multiply by 0.1f here
+    return (SunColor) * 0.1f;
 }
 
 vec3 GetLightDirection(void) {
