@@ -38,6 +38,7 @@ uniform sampler2D depthtex3;
 
 // Misc samplers
 uniform sampler2D texture;
+uniform sampler2D lightmap;
 uniform sampler2D noisetex;
 
 uniform float frameTimeCounter;
