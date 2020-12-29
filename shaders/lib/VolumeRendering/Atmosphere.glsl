@@ -4,12 +4,13 @@
 #include "Phase.glsl"
 #include "AtmosphereProperties.glsl"
 #include "../Utility/Uniforms.glsl"
+#include "../Utility/Functions.glsl"
 #include "../Geometry/Ray.glsl"
 #include "../Geometry/Sphere.glsl"
 
 // Thes values were the best all rounder for both performance and quality
 // I will add a slider for both of these (if I knew how) so users with better computers can get the sky the can acheive
-#define INSCATTERING_STEPS 8 // Optical depth steps [ 8 12 16 24 32 48 64 128 ]
+#define INSCATTERING_STEPS 8 // Inscattering steps [ 8 12 16 24 32 48 64 128 ]
 #define OPTICAL_DEPTH_STEPS 8 // Optical depth steps [ 8 12 16 24 32 48 64 128 ]
 
 // Optical depth:
@@ -18,17 +19,13 @@
 // z - ozone
 
 vec3 ComputeOpticalDepth(Ray AirMassRay, float pointdistance) {
-    vec3 OpticalDepth = vec3(0.0f);
-    float RayMarchStepLength = pointdistance / float(OPTICAL_DEPTH_STEPS);
-    float RayMarchPosition = 0.0f;
-    vec3 CurrentDensity = CalculateAtmosphericDensity(AirMassRay, RayMarchPosition, RayMarchStepLength);
-    for(int Step = 1; Step < OPTICAL_DEPTH_STEPS; Step++){
-        vec3 NextDensity = CalculateAtmosphericDensity(AirMassRay, RayMarchPosition, RayMarchStepLength);
-        OpticalDepth += (CurrentDensity + NextDensity) / 2.0f;
-        RayMarchPosition += RayMarchStepLength;
-        CurrentDensity = NextDensity;
-    }
-    OpticalDepth *= RayMarchStepLength;
+    vec3 Start = AirMassRay.Origin;
+    vec3 End = Start + AirMassRay.Direction * pointdistance;
+    vec2 LUT_Coords = vec2(Start.y, End.y);
+    LUT_Coords = LUT_Coords - EarthRadius;
+    LUT_Coords /= AtmosphereHeight;
+    LUT_Coords = saturate(LUT_Coords);
+    vec3 OpticalDepth = texture2D(colortex6, LUT_Coords).rgb * pointdistance;
     return OpticalDepth;
 }
 
@@ -57,7 +54,9 @@ vec3 GetCameraPositionEarth(void){
 void ComputeAtmosphericScattering(inout Ray ViewRay, in vec3 light, inout vec3 AccumRayleigh, inout vec3 AccumMie, inout vec3 ViewOpticalDepth, inout vec3 AccumViewOpticalDepth, inout float RayMarchPosition, inout float RayMarchStepLength) {
     vec3 SampleLocation = ViewRay.Origin + ViewRay.Direction * (RayMarchPosition + 0.5f * RayMarchStepLength);
     vec3 CurrentDensity = CalculateAtmosphericDensity(SampleLocation);
-    ViewOpticalDepth += CurrentDensity * RayMarchStepLength;
+    Ray SampleRay = ViewRay;
+    SampleRay.Origin = SampleLocation;
+    ViewOpticalDepth += ComputeOpticalDepth(SampleRay, RayMarchStepLength);
     vec3 ViewTransmittance = Transmittance(ViewOpticalDepth + AccumViewOpticalDepth);
     float LightLength = RaySphereIntersect(SampleLocation, light, AtmosphereRadius);
     Ray LightRay;
@@ -70,6 +69,13 @@ void ComputeAtmosphericScattering(inout Ray ViewRay, in vec3 light, inout vec3 A
 }
 
 vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 viewopticaldepth) {
+    float HorizonDot = dot(dir, vec3(0.0f, 1.0f, 0.0f));
+    // TODO: avoid recomputing this in sun function
+    float SunDot = dot(dir, light);
+    float HorizonExtinction = 1.0f;
+    if(HorizonDot < -0.06f && SunDot * 0.5f + 0.5f < SunSpotSize){
+        return vec3(0.0f);
+    }
     //return vec3(1.0f);
     //dir.y = max(dir.y, 0.1f);
     //dir = normalize(dir);
@@ -105,7 +111,7 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 viewoptic
         CurrentOpticalDepth  = NextOpticalDepth ;
     }
     viewopticaldepth = ViewOpticalDepth;
-    return SunColor * (AccumRayleigh * ScatteringStrengthRayleigh + AccumMie * ScatteringStrengthMie) * RayMarchStepLength;
+    return SunColor * (AccumRayleigh * ScatteringStrengthRayleigh + AccumMie * ScatteringStrengthMie) * RayMarchStepLength * HorizonExtinction;
 }
 
 #endif

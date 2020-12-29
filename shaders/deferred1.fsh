@@ -16,15 +16,9 @@ void main(){
         // Init to 0
         Color = vec4(0.0f);
         vec3 Direction = normalize(mat3(gbufferModelViewInverse) * ViewSpaceViewDir);
-        #ifdef PHYSICALLY_BASED_ATMOSPHERE
         vec3 OpticalDepth = vec3(0.0f);
         Color.rgb += ComputeAtmosphericScattering(LightDirection, Direction, OpticalDepth);
         Color.rgb += ComputeSunColor(LightDirection, Direction, OpticalDepth);
-        #else
-        vec3 Absorption;
-        Color.rgb += ComputeInaccurateAtmosphere(LightDirection, Direction, Absorption);
-        Color.rgb += ComputeInaccurateSun(LightDirection, Direction, Absorption);
-        #endif
         //Color.rgb = Direction * 0.5f + 0.5f;
         Color.a = 1.0f;
         /*
@@ -35,6 +29,7 @@ void main(){
     } else {
         Color = texture2D(colortex7, gl_TexCoord[0].st);
     }
+    //Color = texture2D(colortex6, gl_TexCoord[0].st);
     /* DRAWBUFFERS:7 */
     gl_FragData[0] = Color;
 }

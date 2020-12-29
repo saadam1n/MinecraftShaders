@@ -1,6 +1,8 @@
 #ifndef VOLUME_RENDERING_SUN_GLSL
 #define VOLUME_RENDERING_SUN_GLSL 1
 
+#include "SunProperties.glsl"
+
 struct Light {
     vec3 Color;
     vec3 Direction;
