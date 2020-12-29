@@ -37,7 +37,7 @@ vec3 ComputeBloomTile(in float lod, vec2 offset){
                 continue;
             }
             vec2 BloomCoord = Scale * (SampleCoord - offset);
-            Accum += texture2D(colortex0, BloomCoord).rgb * BloomWeight;
+            Accum += texture2DLod(colortex0, BloomCoord, lod).rgb * BloomWeight;
         }
     }
     return Accum / BloomTileNumSamples;

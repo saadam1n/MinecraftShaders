@@ -1,6 +1,6 @@
 #version 120
 
-const bool colortex0MipmapEnabled = false;
+const bool colortex0MipmapEnabled = true;
 
 #include "lib/Blur/BloomTile.glsl"
 
