@@ -17,9 +17,8 @@ void main() {
     gl_FrontColor = gl_Color;
     gl_TexCoord[0].st = gl_MultiTexCoord0.st;
     gl_TexCoord[1].st = mat2(gl_TextureMatrix[1]) * gl_MultiTexCoord1.st;
+    fMasks = CompressMaskStruct(ConstructMaskStruct(mc_Entity.x, gl_TexCoord[1].s));
     Normal = gl_Normal;
     LightDirection = GetLightDirection();
     CurrentSunColor = GetLightColor();
-    fMasks = CompressMaskStruct(ConstructMaskStruct(mc_Entity.x));
-
 }
