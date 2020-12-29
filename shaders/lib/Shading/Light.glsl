@@ -34,7 +34,7 @@ vec3 GetLightColor(void){
     // But I only use a simple cosTheta diffuse BRDF
     // So I must multiply by 0.1f here
     vec3 SunColor = ComputeSunColor(SunDirection, SunDirection) + ComputeAtmosphereColor(SunDirection, SunDirection);
-    SunColor *= 0.1f;
+    SunColor *= 0.17f;
     vec3 MoonColor = vec3(0.1f, 0.15f, 0.9f);
 
     return SunColor;
