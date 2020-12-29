@@ -28,6 +28,7 @@ TODO list:
 - Star rendering
 - Additional tonemap support
 - Fog
+- Combine deferred gbuffers and forward gbuffers into a common file
 # Known issues
 - ~~Atmosphere looks bad and isn't completely physically based~~
 - Translucent items do not have proper forward rendering when dropped
