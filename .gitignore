@@ -401,3 +401,5 @@ CTestTestfile.cmake
 _deps
 *.dir
 *.cmake
+
+*.exe
