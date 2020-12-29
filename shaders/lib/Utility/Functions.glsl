@@ -7,6 +7,10 @@ vec3 saturate(vec3 val){
     return clamp(val, vec3(0.0f), vec3(1.0f));
 }
 
+vec2 saturate(vec2 val){
+    return clamp(val, vec2(0.0f), vec2(1.0f));
+}
+
 float saturate(float val){
     return clamp(val, 0.0f, 1.0f);
 }
