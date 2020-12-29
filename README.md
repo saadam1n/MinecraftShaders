@@ -47,3 +47,4 @@ This shader is based of the works of:
 - [Oskar Elek - Rendering Parametrizable Planetary Atmospheres with Multiple Scattering in Real-Time](http://www.klayge.org/material/4_0/Atmospheric/Rendering%20Parametrizable%20Planetary%20Atmospheres%20with%20Multiple%20Scattering%20in%20Real-Time.pdf) 
 - [Learn OpenGL - Bloom](https://learnopengl.com/Advanced-Lighting/Bloom)
 - [labPBR Documentation](https://github.com/rre36/lab-pbr/wiki)
+- [Sebastien Hillaire - Physically Based Sky, Atmosphere and Cloud Rendering in Frostbite](https://media.contentapi.ea.com/content/dam/eacom/frostbite/files/s2016-pbs-frostbite-sky-clouds-new.pdf)
