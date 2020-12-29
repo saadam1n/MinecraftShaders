@@ -92,6 +92,7 @@ float CalculateExposure(void){
 const float UnderExposure = 0.5f;
 const float OverExposure = 1.5f;
 vec3 HighDynamicRange(in vec3 color){
+	color = min(color, vec3(1.0f));
 	return mix(color * OverExposure, color * UnderExposure, color);
 }
 

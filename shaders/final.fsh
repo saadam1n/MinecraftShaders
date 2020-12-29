@@ -2,6 +2,7 @@
 
 #include "lib/Internal/TextureFormats.glsl"
 #include "lib/Utility/Uniforms.glsl"
+#include "lib/Utility/Functions.glsl"
 #include "lib/Utility/ColorAdjust.glsl"
 
 flat varying float inRain;
@@ -18,10 +19,11 @@ void main(){
 	}
     vec4 color = texture2D(colortex7, TexCoords);
 	color.rgb = ComputeExposureToneMap(color.rgb, Exposure);
-	#ifdef HIGH_DYNAMIC_RANGE
+	//#ifdef HIGH_DYNAMIC_RANGE
 	//if(gl_FragCoord.x > viewWidth / 2) // Uncomment to see side by side comparison
-	color.rgb = HighDynamicRange(color.rgb);
-	#endif
+	//color.rgb = saturate(color.rgb);
+	//color.rgb = HighDynamicRange(color.rgb);
+	//#endif
 	// saturation boosting is never the way to do it
 	//color.rgb = Saturation(color.rgb, 1.3f);
 	//color.rgb *= 3.0f;
@@ -32,9 +34,7 @@ void main(){
 	#ifdef FILM_GRAIN
 	color.rgb = ComputeFilmGrain(color.rgb);
 	#endif
-	#ifdef DEBUG
-	color = texture2D(debugTex,  gl_TexCoord[0].st);
-	#endif
+	color.rgb = saturate(color.rgb);
 	//color.rgb = texture2D(noisetex, gl_TexCoord[0].st).rga;
 	color.rgb = pow(color.rgb, vec3(1.0f / 2.2f));
     gl_FragColor = color;
