@@ -30,11 +30,14 @@ vec3 ComputeBloomTile(in float lod, vec2 offset){
         for(int y = -BLOOM_TILE_SAMPLES; y <= BLOOM_TILE_SAMPLES; y++){
             vec2 Offset = vec2(x, y);
             vec2 SampleCoord = gl_TexCoord[0].st + Offset * TexelSize;
-            if(!IsInRange(SampleCoord, vec2(0.0f), vec2(1.0f))){
+            // Taken from KUDA V6.5.56
+            float BloomWeight = 1.0f - length(Offset) * 0.25;
+            BloomWeight = BloomWeight * BloomWeight * 14.1421356237;
+            if(!IsInRange(SampleCoord, vec2(0.0f), vec2(1.0f)) && BloomWeight > 0.0f){
                 continue;
             }
             vec2 BloomCoord = Scale * (SampleCoord - offset);
-            Accum += texture2DLod(colortex0, BloomCoord, lod).rgb;
+            Accum += texture2D(colortex0, BloomCoord).rgb * BloomWeight;
         }
     }
     return Accum / BloomTileNumSamples;
