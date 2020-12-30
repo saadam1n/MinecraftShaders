@@ -8,7 +8,7 @@ const int RGBA32 = 1;
 const int RGBA32F = 1;
 
 const int colortex0Format = RGBA32F;
-const int colortex1Format = RGBA16;
+const int colortex1Format = RGBA32F;
 const int colortex2Format = RGBA16;
 const int colortex7Format = RGBA32F;
 

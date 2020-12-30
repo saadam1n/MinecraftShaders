@@ -10,7 +10,7 @@ TODO list:
 - ~~Add better support for plants (subsurface scattering and waving plants)~~
 - Sky rendering (volumetric clouds and atmospheric scattering, ozone absorption ) - cloud rendering not started
 - Bloom - needs more tuning/fixing, maybe switch to bloom tiles
-- DOF 
+- ~~DOF~~
 - SSAO
 - SSR
 - Reflective shadow maps

@@ -13,6 +13,7 @@ void main(){
     float CenterDist = (CenterDepth * (far - near)) + near;
     float Distance = (LinearDepth * (far - near)) + near;
     float CoC = ComputeCircleOfConfusion(CenterDist, Distance);
-    /* DRAWBUFFERS:0 */
+    /* DRAWBUFFERS:01 */
     gl_FragData[0] = vec4(BaseColor, CoC);
+    gl_FragData[1] = vec4(BaseColor, CoC);
 }
