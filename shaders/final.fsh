@@ -4,6 +4,7 @@
 #include "lib/Utility/Uniforms.glsl"
 #include "lib/Utility/Functions.glsl"
 #include "lib/Utility/ColorAdjust.glsl"
+#include "lib/Effect/Tonemapping.glsl"
 
 flat varying float inRain;
 flat varying float Exposure;
@@ -18,7 +19,7 @@ void main(){
 		TexCoords = gl_TexCoord[0].st;
 	}
     vec4 color = texture2D(colortex7, TexCoords);
-	color.rgb = ComputeExposureToneMap(color.rgb, Exposure);
+	color.rgb = ComputeHighDynamicRangeExposure(color.rgb, Exposure);
 	//#ifdef HIGH_DYNAMIC_RANGE
 	//if(gl_FragCoord.x > viewWidth / 2) // Uncomment to see side by side comparison
 	//color.rgb = saturate(color.rgb);
@@ -30,7 +31,7 @@ void main(){
     //Apply tonemap 
 	// I like ACES filmic tonemapping due to the contrast increase without making everything dark
 	// TODO: add options for other tonemaps
-	color.rgb = ACESFilmicTonemapping(color.rgb);
+	color.rgb = ComputeTonemap(color.rgb);
 	#ifdef FILM_GRAIN
 	color.rgb = ComputeFilmGrain(color.rgb);
 	#endif

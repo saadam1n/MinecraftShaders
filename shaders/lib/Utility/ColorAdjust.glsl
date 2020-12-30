@@ -17,37 +17,6 @@ vec3 Saturation(vec3 rgb, float adjustment) {
     return mix(intensity, rgb, adjustment);
 }
 
-
-vec3 FilmicToneMapping(vec3 color)
-{
-	color = max(vec3(0.), color - vec3(0.004));
-	color = (color * (6.2 * color + .5)) / (color * (6.2 * color + 1.7) + 0.06);
-	return color;
-}
-
-vec3 Uncharted2ToneMapping(vec3 color)
-{
-	float A = 0.15;
-	float B = 0.50;
-	float C = 0.10;
-	float D = 0.20;
-	float E = 0.02;
-	float F = 0.30;
-	float W = 11.2;
-	float exposure = 2.;
-	color *= exposure;
-	color = ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
-	float white = ((W * (A * W + C * B) + D * E) / (W * (A * W + B) + D * F)) - E / F;
-	color /= white;
-	return color;
-}
-
-vec3 ACESFilmicTonemapping(vec3 color) {
-    return clamp((color*(2.51f*color+0.03f))/(color*(2.43f*color+0.59f)+0.14f), vec3(0.0f), vec3(1.0f));
-}
-
-//#define DEBUG
-
 //#define FILM_GRAIN
 
 const float FilmGrainStrength = 0.00325f;
@@ -76,10 +45,6 @@ vec2 ComputeWaterDropletCoords(void){
 		WaterCoords += WaterNormal.xz / 50.0f;
 	}
 	return mix(gl_TexCoord[0].st, WaterCoords, rainStrength);
-}
-
-vec3 ComputeExposureToneMap(in vec3 color, in float exposure){
-	return 1.0f - exp(-exposure * color);
 }
 
 float CalculateExposure(void){
