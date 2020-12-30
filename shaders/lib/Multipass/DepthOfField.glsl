@@ -10,9 +10,9 @@ void main() {
     float CoC = texture2D(colortex0, gl_TexCoord[0].st).a;
     for(float sample = -DOF_KERNEL_SIZE; sample <= DOF_KERNEL_SIZE; sample++){
         #ifdef DOF_BOKEH_X
-        vec2 Offset = vec2(sample / viewWidth, 0.0f);
+        vec2 Offset = vec2(sample, 0.0f);
         #else
-        vec2 Offset = vec2(0.0f, sample / viewHeight);
+        vec2 Offset = vec2(0.0f, sample * aspectRatio);
         #endif
         Offset *= CoC;
         vec2 Sample = gl_TexCoord[0].st + Offset;

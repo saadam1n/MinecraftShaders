@@ -16,9 +16,7 @@ float ComputeCircleOfConfusion(in float A, in float f, in float S1, in float S2)
 }
 
 float ComputeCircleOfConfusion(in float center, in float dist){
-    // Use very large aperture size
-    // This is to counter the framebuffer size correct in the two pass blur
-    return saturate(ComputeCircleOfConfusion(1000.024f, 1.0f, center, dist));
+    return min(ComputeCircleOfConfusion(0.124f, 2.0f, center, dist), 0.001f);
 }
 
 #endif
