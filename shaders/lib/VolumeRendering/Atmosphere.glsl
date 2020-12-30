@@ -8,10 +8,7 @@
 #include "../Geometry/Ray.glsl"
 #include "../Geometry/Sphere.glsl"
 
-// Thes values were the best all rounder for both performance and quality
-// I will add a slider for both of these (if I knew how) so users with better computers can get the sky the can acheive
-#define INSCATTERING_STEPS 8 // Inscattering steps [ 8 12 16 24 32 48 64 128 ]
-#define OPTICAL_DEPTH_STEPS 8 // Optical depth steps [ 8 12 16 24 32 48 64 128 ]
+#define INSCATTERING_STEPS 32 // Inscattering steps [ 32 48 64 96 128 192 256]
 
 // Optical depth:
 // x - rayleigh

@@ -3,6 +3,8 @@
 
 #include "Uniforms.glsl"
 
+//#define LIGHTING_DEBUG
+
 // Taken from SEUS v10.1
 vec4 Cubic(float x)
 {
@@ -46,15 +48,27 @@ vec4 BicubicTexture(in sampler2D tex, in vec2 coord)
 }
 
 vec4 SampleTextureAtlas(in vec2 coords){
-    return texture2D(texture, coords);
+    vec4 color = texture2D(texture, coords);
+    #ifdef LIGHTING_DEBUG
+    color.rgb = vec3(1.0f);
+    #endif
+    return color;
 }
 
 vec4 SampleTextureAtlas(in vec2 coords, float bias){
-    return texture2D(texture, coords, bias);
+    vec4 color = texture2D(texture, coords, bias);
+    #ifdef LIGHTING_DEBUG
+    color.rgb = vec3(1.0f);
+    #endif
+    return color;
 }
 
 vec4 SampleTextureAtlasLOD(in vec2 coords, float lod){
-    return texture2DLod(texture, coords, lod);
+    vec4 color = texture2DLod(texture, coords, lod);
+    #ifdef LIGHTING_DEBUG
+    color.rgb = vec3(1.0f);
+    #endif
+    return color;
 }
 
 #endif

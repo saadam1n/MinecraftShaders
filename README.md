@@ -49,3 +49,4 @@ This shader is based of the works of:
 - [Learn OpenGL - Bloom](https://learnopengl.com/Advanced-Lighting/Bloom)
 - [labPBR Documentation](https://github.com/rre36/lab-pbr/wiki)
 - [Sebastien Hillaire - Physically Based Sky, Atmosphere and Cloud Rendering in Frostbite](https://media.contentapi.ea.com/content/dam/eacom/frostbite/files/s2016-pbs-frostbite-sky-clouds-new.pdf)
+- [Computer Graphics Forum - Efficiently Simulating the Bokeh of Polygonal Apertures in a Post-Process Depth of Field Shader](https://www.researchgate.net/publication/261860589_Efficiently_Simulating_the_Bokeh_of_Polygonal_Apertures_in_a_Post-Process_Depth_of_Field_Shader)

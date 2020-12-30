@@ -4,10 +4,14 @@
 #include "../Utility/Uniforms.glsl"
 #include "Distort.glsl"
 
-vec3 GetViewSpace(vec2 texcoord = gl_TexCoord[0].st, sampler2D depthsampler = depthtex0){
-    vec4 ndc = vec4(texcoord * 2.0f - 1.0f, texture2D(depthsampler, texcoord).r * 2.0f - 1.0f, 1.0f);
+vec3 GetViewSpace(vec2 texcoord = gl_TexCoord[0].st, in float depth){
+    vec4 ndc = vec4(texcoord * 2.0f - 1.0f, depth * 2.0f - 1.0f, 1.0f);
     ndc = gbufferProjectionInverse * ndc;
     return ndc.xyz / ndc.w;
+}
+
+vec3 GetViewSpace(vec2 texcoord = gl_TexCoord[0].st, sampler2D depthsampler = depthtex0){
+    return GetViewSpace(texcoord, texture2D(depthsampler, texcoord).r);
 }
 
 vec3 GetPlayerSpace(vec2 texcoord = gl_TexCoord[0].st, sampler2D depthsampler = depthtex0){
@@ -35,6 +39,11 @@ vec3 GetShadowSpaceDistortedSample(vec2 texcoord = gl_TexCoord[0].st, sampler2D 
 
 vec3 GetShadowSpaceSample(vec2 texcoord = gl_TexCoord[0].st, sampler2D depthsampler = depthtex0){
     return GetShadowSpace(texcoord, depthsampler) * 0.5f + 0.5f;
+}
+
+// taken from https://learnopengl.com/Advanced-OpenGL/Depth-testing 
+float LinearizeDepth(in float depth){
+    return (2.0f * near * far) / (far + near - (2.0f * depth - 1.0f) * (far - near)); 
 }
 
 #endif

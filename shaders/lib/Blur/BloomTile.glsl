@@ -21,11 +21,12 @@ vec2 TexelSize = 1.0f / vec2(viewWidth, viewHeight);
 // TODO: use a gaussian kernel
 vec3 ComputeBloomTile(in float lod, vec2 offset){
     float Scale = exp2(lod);
-    vec3 Accum = vec3(0.0f);
     vec2 StartCoord = Scale * (gl_TexCoord[0].st - offset);
     if(!IsInRange(StartCoord, vec2(-0.1f), vec2(1.1f))){
         return vec3(0.0f);
     }
+    vec3 Accum = vec3(0.0f);
+    //float WeightAccum = 0.0f;
     for(int x = -BLOOM_TILE_SAMPLES; x <= BLOOM_TILE_SAMPLES; x++){
         for(int y = -BLOOM_TILE_SAMPLES; y <= BLOOM_TILE_SAMPLES; y++){
             vec2 Offset = vec2(x, y);
@@ -38,6 +39,7 @@ vec3 ComputeBloomTile(in float lod, vec2 offset){
             }
             vec2 BloomCoord = Scale * (SampleCoord - offset);
             Accum += texture2DLod(colortex0, BloomCoord, lod).rgb * BloomWeight;
+            //WeightAccum += BloomWeight;
         }
     }
     return Accum / BloomTileNumSamples;

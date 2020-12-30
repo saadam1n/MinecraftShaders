@@ -61,4 +61,7 @@ uniform int frameCounter;
 uniform ivec2 eyeBrightness;
 uniform ivec2 eyeBrightnessSmooth;  
 
+uniform float centerDepthSmooth;
+uniform float aspectRatio;
+
 #endif
