@@ -4,6 +4,8 @@
 // Use the same names that SEUS V10.1 did
 struct SurfaceStruct {
     vec4 Diffuse;
+
+    vec3 ViewNormal;
     vec3 Normal;
 
     vec3 Screen;
@@ -30,6 +32,8 @@ struct ShadingStruct {
     vec3 Sky;
     vec3 Volumetric;
     vec3 OpticalDepth;
+
+    float AmbientOcclusion;
 };
 
 #endif

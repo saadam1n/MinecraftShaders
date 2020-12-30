@@ -9,7 +9,7 @@ const vec4 colortex2ClearColor = vec4(0.0f, 0.0f, 1.0f, 0.0f);
 const float wetnessHalfLife = 600.0f;
 const float drynessHalfLife = 200.0f;
 const float eyeBrightnessHalflife = 15.0f;
-const float ambientOcclusionLevel = 0.0f;
+const float ambientOcclusionLevel = 1.0f; // I'll set this to 0 one I have SSAO working
 const float centerDepthSmoothHalflife = 10.0f;
 
 #endif
