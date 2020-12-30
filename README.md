@@ -26,7 +26,7 @@ TODO list:
 - Proper day night transition
 - Adjusted values for torch and sky lightmap
 - Star rendering
-- Additional tonemap support
+- ~~Additional tonemap support~~
 - Fog
 - Combine deferred gbuffers and forward gbuffers into a common file
 # Known issues
