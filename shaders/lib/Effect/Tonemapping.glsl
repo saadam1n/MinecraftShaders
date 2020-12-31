@@ -4,11 +4,17 @@
 // http://filmicworlds.com/blog/filmic-tonemapping-operators/
 // https://www.shadertoy.com/view/lslGzl 
 
-// Only use 
+#include "../Utility/ColorAdjust.glsl"
+
+// Only use in HDR
 vec3 ComputeHighDynamicRangeExposure(in vec3 color, in float exposure){
 	return 1.0f - exp(-exposure * color);
 }
 
+// I'm not a big fan of reinhard tonemapping, especially 1 / (1+x)
+// It takes away your deep blacks and saturation
+// And each color seems to get increasingly white but never seems to have that property of being white
+// Which makes it look like Minecraft xbox edition
 vec3 ComputeTonemapReinhard(in vec3 color){
     return color / (color + 1.0f);
 }
@@ -65,23 +71,32 @@ vec3 ComputeTonemapSmooth(in vec3 color){
 
 #define TONEMAPPING_OPERATOR 5 // [0 1 2 3 4 5 6 7 8]
 
+// TODO:
+// - Add tonemaps from this shadertoy https://www.shadertoy.com/view/4dBcD1 
+// - Add other tonemaps
+// - Write my own tonemaps
+// The goal of these TODOs is to give the user an ability to choose the looks of the shader they like
+// After all, shaders are very subjective and the tonemap is a big decieder in who likes the shader
+// Some people like super saturated looks, others don't
+// I, myself, perfer saturated looks
+
 vec3 ComputeTonemap(in vec3 color){
     #if TONEMAPPING_OPERATOR == 0
-    return color; // No tonemapping
+    return ComputeHighDynamicRangeExposure(color, 1.9f); // No tonemapping, just make the image a bit brighter
     #elif TONEMAPPING_OPERATOR == 1
-    return ComputeTonemapReinhard(color);
+    return ComputeTonemapReinhard(color * 4.9f);
     #elif TONEMAPPING_OPERATOR == 2
-    return ComputeTonemapFilmic(color);
+    return ComputeTonemapFilmic(color * 0.4f);
     #elif TONEMAPPING_OPERATOR == 3
-    return ComputeTonemapFilmicACES(color);
+    return ComputeTonemapFilmicACES(color * 1.1f);
     #elif TONEMAPPING_OPERATOR == 4
-    return ComputeTonemapUncharted2(color);
+    return ComputeTonemapUncharted2(color * 3.7f);
     #elif TONEMAPPING_OPERATOR == 5
-    return ComputeTonemapRomBinDaHouse(color);
+    return ComputeTonemapRomBinDaHouse(color * 1.9f);
     #elif TONEMAPPING_OPERATOR == 6
-    return ComputeTonemapLumaReinhard(color);
+    return ComputeTonemapLumaReinhard(color * 2.9f);
     #elif TONEMAPPING_OPERATOR == 7
-    return ComputeTonemapWhiteLumaReinhard(color);
+    return ComputeTonemapWhiteLumaReinhard(color * 2.9f);
     #elif TONEMAPPING_OPERATOR == 8
     return ComputeTonemapSmooth(color);
     #endif 
