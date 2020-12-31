@@ -49,7 +49,7 @@ vec2 ComputeWaterDropletCoords(void){
 
 float CalculateExposure(void){
 	float EyeSkyLightMap = eyeBrightnessSmooth.y / 240.0f;
-	float SkyExposure = mix(3.0f, 1.0f, EyeSkyLightMap);
+	float SkyExposure = mix(1.5f, 1.0f, EyeSkyLightMap) * 0.5f;
 	return SkyExposure;
 }
 

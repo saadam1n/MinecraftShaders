@@ -69,7 +69,11 @@ vec3 ComputeTonemapSmooth(in vec3 color){
     return pow(smoothstep(vec3(0.0f), vec3(1.0f), color), vec3(0.55f));
 }
 
-#define TONEMAPPING_OPERATOR 5 // [0 1 2 3 4 5 6 7 8]
+vec3 ComputeTonemapConvergence(in vec3 color){
+	return mix(pow(color, vec3(0.707f)), color * color, color);
+}
+
+#define TONEMAPPING_OPERATOR 5 // [0 1 2 3 4 5 6 7 8 9]
 
 // TODO:
 // - Add tonemaps from this shadertoy https://www.shadertoy.com/view/4dBcD1 
@@ -81,25 +85,32 @@ vec3 ComputeTonemapSmooth(in vec3 color){
 // I, myself, perfer saturated looks
 
 vec3 ComputeTonemap(in vec3 color){
+	/*
     #if TONEMAPPING_OPERATOR == 0
-    return ComputeHighDynamicRangeExposure(color, 1.9f); // No tonemapping, just make the image a bit brighter
+    return color;
     #elif TONEMAPPING_OPERATOR == 1
-    return ComputeTonemapReinhard(color * 4.9f);
+	// This helps regain some saturation
+    return ComputeTonemapReinhard(Saturation(color * 1.9f, 1.1f));
     #elif TONEMAPPING_OPERATOR == 2
-    return ComputeTonemapFilmic(color * 0.4f);
+    return ComputeTonemapLumaReinhard(color * 3.0f);
     #elif TONEMAPPING_OPERATOR == 3
-    return ComputeTonemapFilmicACES(color * 1.1f);
+    return ComputeTonemapWhiteLumaReinhard(color);
     #elif TONEMAPPING_OPERATOR == 4
-    return ComputeTonemapUncharted2(color * 3.7f);
+    return ComputeTonemapFilmic(color);
     #elif TONEMAPPING_OPERATOR == 5
-    return ComputeTonemapRomBinDaHouse(color * 1.9f);
+    return ComputeTonemapFilmicACES(color);
     #elif TONEMAPPING_OPERATOR == 6
-    return ComputeTonemapLumaReinhard(color * 2.9f);
+    return ComputeTonemapUncharted2(color);
     #elif TONEMAPPING_OPERATOR == 7
-    return ComputeTonemapWhiteLumaReinhard(color * 2.9f);
+    return ComputeTonemapRomBinDaHouse(color);
     #elif TONEMAPPING_OPERATOR == 8
     return ComputeTonemapSmooth(color);
+    #elif TONEMAPPING_OPERATOR == 9
+	return ComputeTonemapConvergence(color);
     #endif 
+	*/
+	return ComputeTonemapWhiteLumaReinhard(color * 3.0f);
 }
+
 
 #endif
