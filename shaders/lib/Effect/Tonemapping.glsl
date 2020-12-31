@@ -73,7 +73,7 @@ vec3 ComputeTonemapConvergence(in vec3 color){
 	return mix(pow(color, vec3(0.707f)), color * color, color);
 }
 
-#define TONEMAPPING_OPERATOR 5 // [0 1 2 3 4 5 6 7 8 9]
+// // #define TONEMAPPING_OPERATOR 5 // [0 1 2 3 4 5 6 7 8 9]
 
 // TODO:
 // - Add tonemaps from this shadertoy https://www.shadertoy.com/view/4dBcD1 
