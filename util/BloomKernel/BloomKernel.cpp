@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 
-const float StandardDeviation = 20.0f                  ;
+const float StandardDeviation = 5.5f                   ;
 const int   KernelSamples     = 15                     ;
 const int   KernelSize          = KernelSamples * 2 + 1;
 
@@ -18,17 +18,17 @@ int main() {
     float Kernel[KernelSize];
     for (int KernelDistance = -KernelSamples; KernelDistance <= KernelSamples; KernelDistance++) {
         float GaussianWeight = Gaussian(StandardDeviation, KernelDistance);
-        printf("%f\n", GaussianWeight);
         Normalizer += GaussianWeight;
         Kernel[KernelDistance + KernelSamples] = GaussianWeight;
     }  
     for (int index = 0; index < KernelSize; index++) {
         float Val = Kernel[index];
         Val /= Normalizer;
-        fprintf(KernelWrite, "%ff", Val);
+        fprintf(KernelWrite, "%1.20ff", Val);
         if (index != KernelSize - 1) {
             fprintf(KernelWrite, ",\n\t");
         }
+        printf("%1.20f\n", Val);
     }
     fprintf(KernelWrite, "\n);\n\n#endif");
     fclose(KernelWrite);

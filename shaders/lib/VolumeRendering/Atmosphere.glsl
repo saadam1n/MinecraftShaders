@@ -83,6 +83,11 @@ void ComputeAtmosphericScattering(inout Ray ViewRay, in vec3 light, inout vec3 A
 }
 
 vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 viewopticaldepth) {
+    float HorizonDot = dot(dir, vec3(0.0f, 1.0f, 0.0f));
+    float EyeExtinction = 1.0f;
+    if(HorizonDot < 0.0f){
+        EyeExtinction = max(1.0f - exp(-50.0f * HorizonDot - 4.0f), 0.0f);
+    }
     vec3 ViewPos = GetCameraPositionEarth();
     float AtmosphereDistance = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
     vec3 AtmosphereIntersectionLocation = ViewPos + dir * AtmosphereDistance;
@@ -115,7 +120,8 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 viewoptic
         CurrentOpticalDepth  = NextOpticalDepth ;
     }
     viewopticaldepth = ViewOpticalDepth;
-    return SunColor * (AccumRayleigh * ScatteringStrengthRayleigh + AccumMie * ScatteringStrengthMie) * RayMarchStepLength;
+    vec3 AtmosphereColor = SunColor * (AccumRayleigh * ScatteringStrengthRayleigh + AccumMie * ScatteringStrengthMie) * RayMarchStepLength * EyeExtinction;
+    return max(AtmosphereColor, vec3(0.0f));
 }
 
 #endif

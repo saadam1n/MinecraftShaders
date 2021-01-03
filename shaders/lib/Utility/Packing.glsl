@@ -21,6 +21,8 @@ float CompressMaskStruct(in MaskStruct masks){
     int imasks = 0;
     imasks |= PackMask(masks.Sky,   SKY_BIT  );
     imasks |= PackMask(masks.Plant, PLANT_BIT);
+    imasks |= PackMask(masks.LightSource, LIGHT_SOURCE_BIT);
+    imasks |= PackMask(masks.Sun, SUN_BIT);
     float fmasks = float(imasks) / 65535.0f;
     return fmasks;
 }
@@ -30,6 +32,8 @@ MaskStruct DecompressMaskStruct(in float fmasks){
     MaskStruct UnpackedMasks;
     UnpackedMasks.Sky   = UnpackMask(imasks, SKY_BIT);
     UnpackedMasks.Plant = UnpackMask(imasks, PLANT_BIT);
+    UnpackedMasks.LightSource = UnpackMask(imasks, LIGHT_SOURCE_BIT);
+    UnpackedMasks.Sun = false;UnpackMask(imasks, SUN_BIT);
     return UnpackedMasks;
 }
 

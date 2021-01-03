@@ -9,7 +9,6 @@ flat varying float fMasks;
 
 void main(){
     vec4 color = SampleTextureAtlas(gl_TexCoord[0].st) * gl_Color;
-    MaskStruct Masks = DecompressMaskStruct(fMasks);
     /* DRAWBUFFERS:012 */
     gl_FragData[0].rgba = color;
     gl_FragData[1].rgb  = Normal * 0.5f + 0.5;

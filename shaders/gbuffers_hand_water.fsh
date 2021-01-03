@@ -19,6 +19,7 @@ void main () {
     ShadeSurfaceStruct(Surface, Shading, Masks, LightDirection, CurrentSunColor); 
     ComputeColor(Surface, Shading);
     //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st).rgb;
-    /* DRAWBUFFERS:7 */
+    /* DRAWBUFFERS:72 */
     gl_FragData[0] = Shading.Color;
+    gl_FragData[1].b = 0.0f;
 }

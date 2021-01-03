@@ -15,11 +15,11 @@ struct MaskStruct {
 #define LIGHT_SOURCE_BIT 4
 #define SUN_BIT 8
 
-MaskStruct ConstructMaskStruct(in float id, in float torch){
+MaskStruct ConstructMaskStruct(in float id){
     MaskStruct Masks;
     Masks.Sky = false;
     Masks.Plant = IS_TALL_GRASS(id);
-    Masks.LightSource = (torch == 1.0f);
+    Masks.LightSource = id == 50.0f;
     Masks.Sun = false;
     return Masks;
 }
