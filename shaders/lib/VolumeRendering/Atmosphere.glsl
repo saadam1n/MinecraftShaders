@@ -48,6 +48,23 @@ vec3 GetCameraPositionEarth(void){
     #endif
 }
 
+// https://web.archive.org/web/20200313091416/http://codeflow.org/entries/2011/apr/13/advanced-webgl-part-2-sky-rendering/
+float ComputeHorizonExtinction(vec3 position, vec3 dir, float radius){
+    float u = dot(dir, -position);
+    if(u<0.0){
+        return 1.0;
+    }
+    vec3 near = position + u*dir;
+    if(length(near) < radius){
+        return 0.0;
+    }
+    else{
+        vec3 v2 = normalize(near)*radius - position;
+        float diff = acos(dot(normalize(v2), dir));
+        return smoothstep(0.0, 1.0, pow(diff*2.0, 3.0));
+    }
+}
+
 void ComputeAtmosphericScattering(inout Ray ViewRay, in vec3 light, inout vec3 AccumRayleigh, inout vec3 AccumMie, inout vec3 ViewOpticalDepth, inout vec3 AccumViewOpticalDepth, inout float RayMarchPosition, inout float RayMarchStepLength) {
     vec3 SampleLocation = ViewRay.Origin + ViewRay.Direction * (RayMarchPosition + 0.5f * RayMarchStepLength);
     vec3 CurrentDensity = CalculateAtmosphericDensity(SampleLocation);
@@ -66,16 +83,6 @@ void ComputeAtmosphericScattering(inout Ray ViewRay, in vec3 light, inout vec3 A
 }
 
 vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 viewopticaldepth) {
-    float HorizonDot = dot(dir, vec3(0.0f, 1.0f, 0.0f));
-    // TODO: avoid recomputing this in sun function
-    float SunDot = dot(dir, light);
-    float HorizonExtinction = 1.0f;
-    if(HorizonDot < -0.06f && SunDot * 0.5f + 0.5f < SunSpotSize){
-        return vec3(0.0f);
-    }
-    //return vec3(1.0f);
-    //dir.y = max(dir.y, 0.1f);
-    //dir = normalize(dir);
     vec3 ViewPos = GetCameraPositionEarth();
     float AtmosphereDistance = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
     vec3 AtmosphereIntersectionLocation = ViewPos + dir * AtmosphereDistance;
@@ -108,7 +115,7 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 viewoptic
         CurrentOpticalDepth  = NextOpticalDepth ;
     }
     viewopticaldepth = ViewOpticalDepth;
-    return SunColor * (AccumRayleigh * ScatteringStrengthRayleigh + AccumMie * ScatteringStrengthMie) * RayMarchStepLength * HorizonExtinction;
+    return SunColor * (AccumRayleigh * ScatteringStrengthRayleigh + AccumMie * ScatteringStrengthMie) * RayMarchStepLength;
 }
 
 #endif

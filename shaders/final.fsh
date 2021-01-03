@@ -11,6 +11,8 @@ flat varying float Exposure;
 
 #define HIGH_DYNAMIC_RANGE
 
+const bool colortex7MipmapEnabled = false;
+
 void main(){
 	vec2 TexCoords;
 	if(inRain == 1.0f){
@@ -18,7 +20,7 @@ void main(){
 	} else {
 		TexCoords = gl_TexCoord[0].st;
 	}
-    vec4 color = texture2D(colortex7, TexCoords);
+    vec4 color = texture2DLod(colortex7, TexCoords, 0);
 	color.rgb = ComputeHighDynamicRangeExposure(color.rgb, Exposure);
 	//#ifdef HIGH_DYNAMIC_RANGE
 	//if(gl_FragCoord.x > viewWidth / 2) // Uncomment to see side by side comparison

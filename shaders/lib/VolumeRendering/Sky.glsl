@@ -10,11 +10,11 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir){
 }
 
 // https://www.shadertoy.com/view/llffzM 
-const vec3 SkyColor = vec3(0.39, 0.57, 1.0);
+const vec3 ISkyColor = vec3(0.39, 0.57, 1.0);
 const vec3 SkyGradientBottom = vec3(0.8, 0.9, 1.0f);
 
 vec3 ComputeInaccurateAtmosphere(in vec3 light, in vec3 dir, out vec3 sun) {
-    vec3 Rayleigh = mix(SkyGradientBottom, SkyColor, min(dir.y + 0.5f, 1.0f)); 
+    vec3 Rayleigh = mix(SkyGradientBottom, ISkyColor, min(dir.y + 0.5f, 1.0f)); 
     float cosTheta = dot(light, dir);
     float Mie = pow(cosTheta * 0.5f + 0.5f, 42.0f) * 0.3f;
     return Rayleigh + Mie;

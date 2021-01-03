@@ -1,6 +1,8 @@
 #ifndef UTILITY_BLUR_GLSL
 #define UTILITY_BLUR_GLSL 1
 
+#include "Constants.glsl"
+
 float Gaussian(float stddev, float x){
     float stddev2 = stddev * stddev;
     float stddev2_2 = stddev2 * 2.0f;

@@ -42,7 +42,7 @@ float ComputeLensFlareCircle(in vec2 light, const float blend, in float radius){
 
 vec3 ComputeLensFlare(void){
     float SunDot = dot(normalize(sunPosition), vec3(0.0f, 0.0f, -1.0f));
-    if(SunDot < -0.6f){
+    if(SunDot < -0.4f){
         return vec3(0.0f);
     }
     // Get the screen screen position

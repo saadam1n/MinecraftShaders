@@ -11,7 +11,7 @@ vec3 ComputeHighDynamicRangeExposure(in vec3 color, in float exposure){
 	return 1.0f - exp(-exposure * color);
 }
 
-// I'm not a big fan of reinhard tonemapping, especially 1 / (1+x)
+// I'm not a big fan of reinhard tonemapping, especially x / (1+x)
 // It takes away your deep blacks and saturation
 // And each color seems to get increasingly white but never seems to have that property of being white
 // Which makes it look like Minecraft xbox edition
@@ -85,6 +85,7 @@ vec3 ComputeTonemapConvergence(in vec3 color){
 // I, myself, perfer saturated looks
 
 vec3 ComputeTonemap(in vec3 color){
+	//return color;
 	/*
     #if TONEMAPPING_OPERATOR == 0
     return color;
@@ -109,7 +110,11 @@ vec3 ComputeTonemap(in vec3 color){
 	return ComputeTonemapConvergence(color);
     #endif 
 	*/
-	return ComputeTonemapWhiteLumaReinhard(color * 3.0f);
+	vec3 FilmicACES = ComputeTonemapFilmicACES(color);
+	return FilmicACES;
+	color = ComputeHighDynamicRangeExposure(color, 2.0f);
+	vec3 Reinhard = ComputeTonemapWhiteLumaReinhard(color);
+	return mix(FilmicACES, Reinhard, 0.2f);
 }
 
 

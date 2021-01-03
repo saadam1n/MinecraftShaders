@@ -1,6 +1,16 @@
 #ifndef VOLUME_RENDERING_VOLUMETRIC_LIGHTING_GLSL
 #define VOLUME_RENDERING_VOLUMETRIC_LIGHTING_GLSL 1
 
+// TOOD:
+// Updated VL using actual papers instead of doing it myself
+// Posible sources:
+// https://developer.nvidia.com/gpugems/gpugems3/part-ii-light-and-shadows/chapter-13-volumetric-light-scattering-post-process 
+// https://software.intel.com/content/www/us/en/develop/articles/ivb-atmospheric-light-scattering.html 
+// http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=6F0D486CFF38486898A53648D1DE71D6?doi=10.1.1.230.2900&rep=rep1&type=pdf
+// http://liu.diva-portal.org/smash/get/diva2:449126/FULLTEXT01.pdf 
+// https://research.ijcaonline.org/volume108/number11/pxc3900275.pdf 
+// I'll work on this an VL clouds tmrw
+
 const float VolumetricLightingScattering = 0.1f;
 const float VolumetricLightingAbsorption = 0.0f;
 const float VolumetricLightingExtinction = VolumetricLightingScattering + VolumetricLightingAbsorption;

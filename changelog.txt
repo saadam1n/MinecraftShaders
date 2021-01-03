@@ -1,0 +1,6 @@
+Update 1.0.0
+- Added change log system, idea credit to the dev of the KUDA shader
+- Commits will just say what update it is now
+- Change log list will be latest to oldest (top to bottom order) starting from 1.0.0
+- A better system for bloom
+- Small changes to lighting and tonemapping

@@ -4,6 +4,52 @@
 #include "../Utility/Uniforms.glsl"
 #include "../Utility/Functions.glsl"
 
+const vec2 BloomTiles[] = vec2[](
+    vec2(0.0f, 0.0f), 
+    vec2(0.6f, 0.0f),
+    vec2(0.0f, 0.6f),
+    vec2(0.6f, 0.6f)
+);
+
+vec3 CreateBloomTile(in float LOD, in vec2 offset){
+    float Scale = exp2(LOD);
+    vec2 CurrentCoord = (gl_TexCoord[0].st - offset) * Scale;
+    if(!IsInRange(CurrentCoord, vec2(0.0f), vec2(1.0f))){
+        return vec3(0.0f);
+    }
+    return texture2DLod(colortex0, CurrentCoord, LOD).rgb;
+}
+
+vec3 CreateBloomTiles(void){
+    vec3 BloomTileAccum = vec3(0.0f);
+    BloomTileAccum += CreateBloomTile(1.0f, BloomTiles[0]);
+    BloomTileAccum += CreateBloomTile(2.0f, BloomTiles[1]);
+    BloomTileAccum += CreateBloomTile(3.0f, BloomTiles[2]);
+    BloomTileAccum += CreateBloomTile(4.0f, BloomTiles[3]);
+    return BloomTileAccum;
+}
+
+vec3 CollectBloomTile(in float LOD, in vec2 offset){
+    float Scale = exp2(-LOD);
+    vec2 CurrentCoord = (gl_TexCoord[0].st) * Scale + offset;
+    if(!IsInRange(CurrentCoord, vec2(0.0f), vec2(1.0f))){
+        return vec3(0.0f);
+    }
+    return texture2D(colortex1, CurrentCoord).rgb;
+}
+
+vec3 CollectBloomTiles(void){
+    //return CollectBloomTile(4.0f, BloomTiles[3]);
+    vec3 BloomTileAccum = vec3(0.0f);
+    BloomTileAccum += texture2D(colortex0, gl_TexCoord[0].st).rgb;
+    BloomTileAccum += CollectBloomTile(1.0f, BloomTiles[0]);
+    BloomTileAccum += CollectBloomTile(2.0f, BloomTiles[1]);
+    BloomTileAccum += CollectBloomTile(3.0f, BloomTiles[2]);
+    BloomTileAccum += CollectBloomTile(4.0f, BloomTiles[3]);
+    return BloomTileAccum / 5.0f;
+}
+
+/*
 // Offsets taken from KUDA V6.5.56
 const vec2 BloomTiles[] = vec2[](
     vec2(0.0f, 0.0f), 
@@ -71,5 +117,5 @@ vec3 CollectBloomTiles(void){
     }
     return Accum;
 }
-
+*/
 #endif

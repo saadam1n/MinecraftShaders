@@ -1,5 +1,5 @@
 #ifndef SHADING_LIGHT_MAP_GLSL
-#define SHADING_LIGHT_MAP_GLSL
+#define SHADING_LIGHT_MAP_GLSL 1
 
 #include "Structures.glsl"
 #include "../Utility/Functions.glsl"
@@ -52,8 +52,10 @@ void AdjustLightMap(inout SurfaceStruct surface){
 }
 
 void ComputeLightmap(in SurfaceStruct Surface, inout ShadingStruct Shading){
+    // http://planetpixelemporium.com/tutorialpages/light.html
+    const vec3 SkyColor =  ivec3(64, 156, 255) / 255.0f;
     Shading.Torch = Surface.Torch * TorchEmitColor * mix(1.0f - Surface.Sky, 1.0f, rainStrength);
-    Shading.Sky = Surface.Sky * vec3(0.1f, 0.175f, 0.225f) * 1.3f;
+    Shading.Sky = Surface.Sky * SkyColor * 1.3f;
 }
 
 

@@ -2,10 +2,14 @@
 
 const bool colortex0MipmapEnabled = true;
 
-#include "lib/Blur/BloomTile.glsl"
+#include "lib/Utility/Uniforms.glsl"
+#include "lib/Utility/Functions.glsl"
+#include "lib/Effect/BloomTile.glsl"
+
+// First create the bloom tiles
 
 void main() {
-    vec3 Bloom = ComputeBloomTiles();
-    /* DRAWBUFFERS:0 */
-    gl_FragData[0].rgb = Bloom;
+    vec3 BloomTile = CreateBloomTiles();
+    /* DRAWBUFFERS:1 */
+    gl_FragData[0] = vec4(BloomTile, 1.0f);
 }

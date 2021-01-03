@@ -14,7 +14,7 @@ float PhaseHenyeyGreenstein(in float cosTheta, in float g){
 }
 
 float PhaseMie(in float cosTheta) {
-    return PhaseHenyeyGreenstein(cosTheta, -0.9f);
+    return PhaseHenyeyGreenstein(cosTheta, -0.974f);
 }
 
 float PhaseRayleigh(in vec3 v, in vec3 l){

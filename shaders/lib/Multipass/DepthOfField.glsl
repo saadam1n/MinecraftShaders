@@ -14,6 +14,7 @@ void main() {
     float CoC1 = texture2D(colortex1, gl_TexCoord[0].st).a;
     const float CoCThreshold =  0.00001f;
     if(CoC0 < CoCThreshold || CoC1 < CoCThreshold){
+        //discard;
         gl_FragData[0] = vec4(texture2D(colortex0, gl_TexCoord[0].st).rgb, CoC0);
         gl_FragData[1] = vec4(texture2D(colortex1, gl_TexCoord[0].st).rgb, CoC1);
         return;
