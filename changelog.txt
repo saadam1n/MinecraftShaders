@@ -1,9 +1,11 @@
-Update 1.0.1
+Update 1.0.1.a
 - Update to how masks are handled
 - block.properties now uses block ID 50 for light sources
 - Much better bloom
 - New item added to README.md
-Update 1.0.0
+- Updated naming system for updates
+- Fixed block selection box bug
+Update 1.0.0.a
 - Added change log system, idea credit to the dev of the KUDA shader
 - Commits will just say what update it is now
 - Change log list will be latest to oldest (top to bottom order) starting from 1.0.0
