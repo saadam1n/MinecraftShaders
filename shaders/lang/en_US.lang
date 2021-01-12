@@ -1,0 +1,26 @@
+profile.LOW=Low
+profile.MEDIUM=Medium
+profile.HIGH=High
+profile.ULTRA=Ultra
+
+option.shadowMapResolution=Shadow Map Resolution
+option.shadowDistance=Shadow Render Distance
+option.SHADOW_SAMPLES=Shadow Blur Size
+value.SHADOW_SAMPLES.0.0=Hard Shadows
+option.SHADOW_QUALITY=Shadow Blur Quality
+option.VIBRANT_SUN_LIGHTING=Vibrant Sun Lighting
+option.HARDWARE_SHADOW_FILTERING=Hardware Accelerated Shadows
+
+option.INSCATTERING_STEPS=Atmosphere Quality
+option.MULTISCATTERING=Accurate Atmosphere Simulation
+
+option.VOLUMETRIC_CLOUDS=Volumetric Clouds
+option.CLOUD_INSCATTERING_STEPS=Cloud Quality 0
+option.CLOUD_LIGHT_STEPS=Cloud Quality 1
+
+option.TONEMAPPING_OPERATOR=Tonemapping Operator 
+value.TONEMAPPING_OPERATOR.0=ACES Filmic
+value.TONEMAPPING_OPERATOR.1=Reinhard
+
+option.COC_BLUR=Edge Blur
+

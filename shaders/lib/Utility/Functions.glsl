@@ -27,4 +27,15 @@ bool IsInRange(in vec2 vec, in vec2 lower, in vec2 upper){
     return all(greaterThan(vec, lower)) && all(lessThan(vec, upper));
 }
 
+// https://hub.jmonkeyengine.org/t/round-with-glsl/8186 
+vec2 Round(in vec2 coords){
+    vec2 signum=sign(coords);//1
+    coords=abs(coords);//2
+    vec2 coords2 =fract(coords);//3
+    coords=floor(coords);//4
+    coords2=ceil((sign(coords2-0.5)+1.0)*0.5);//5
+    coords=(coords+coords2)*signum;
+    return coords;
+}
+
 #endif

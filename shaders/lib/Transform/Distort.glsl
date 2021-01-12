@@ -4,6 +4,7 @@
 #include "../Utility/Constants.glsl"
 
 #define SHADOW_MAP_BIAS 0.9f
+#define SHADOW_DISTORTION // Nobody in their right minds should turn this off
 
 float DistortionFactor(in vec2 position) {
     float len = length(position);
@@ -11,10 +12,12 @@ float DistortionFactor(in vec2 position) {
 }
 
 vec2 DistortShadowCoords(in vec2 shadowcoords){
+    //return mix(shadowcoords, shadowcoords + 1.0f / (pow(length(shadowcoords), 8.0f) + 1.0f), 0.3f);
+    #ifndef SHADOW_DISTORTION
+    return shadowcoords;
+    #endif
     vec2 distortedcoords =  shadowcoords * 1.0f / DistortionFactor(shadowcoords);
-    //vec2 t = abs(1.0f / distortedcoords);
-    //float mult = min(t.x, t.y) * length(distortedcoords);
-    return distortedcoords;// * mult;
+    return distortedcoords;
 }
 
 vec3 DistortShadowPos(in vec3 ShadowPos){

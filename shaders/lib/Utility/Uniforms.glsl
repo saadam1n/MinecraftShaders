@@ -1,6 +1,20 @@
 #ifndef UTILITY_UNIFORMS_GLSL
 #define UTILITY_UNIFORMS_GLSL 1
 
+#ifndef INTERNAL_SHADER_SETTINGS_GLSL
+#define INTERNAL_SHADER_SETTINGS_GLSL 1
+
+const int shadowMapResolution = 2048; // The shadow resolution [256 512 1024 1572 2048 3072 4096 8192 16384]
+const float shadowDistance = 128; // How large the shadow map is [16 32 64 72 96 128 180 256]
+const int noiseTextureResolution = 512;
+
+#define ShaderPrecision highp
+
+precision ShaderPrecision int;
+precision ShaderPrecision float;
+
+#endif
+
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferProjectionInverse;
@@ -12,9 +26,8 @@ uniform mat4 shadowModelViewInverse;
 
 uniform vec3 cameraPosition;
 
-// Shadow samplers
-uniform sampler2DShadow shadowtex0;
-uniform sampler2DShadow shadowtex1;
+uniform sampler2D shadowtex0;
+uniform sampler2D shadowtex1;
 uniform sampler2D shadowcolor0;
 uniform sampler2D shadowcolor1;
 
@@ -38,6 +51,7 @@ uniform sampler2D depthtex3;
 
 // Misc samplers
 uniform sampler2D texture;
+uniform sampler2D tex;
 uniform sampler2D lightmap;
 uniform sampler2D noisetex;
 
@@ -63,5 +77,21 @@ uniform ivec2 eyeBrightnessSmooth;
 
 uniform float centerDepthSmooth;
 uniform float aspectRatio;
+
+uniform float eyeAltitude;
+
+#define PrecomputedOpticalDepth depthtex2
+
+uniform vec3 moonPosition;
+uniform vec3 upPosition;
+
+// Custom Uniforms
+
+uniform vec2 ScreenSize;
+uniform vec2 TexelSize;
+uniform float CenterDistance;
+uniform vec3 LightDirection;
+uniform vec3 SunDirection;
+uniform vec3 MoonDirection;
 
 #endif

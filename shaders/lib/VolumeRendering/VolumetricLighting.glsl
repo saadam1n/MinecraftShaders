@@ -1,6 +1,8 @@
 #ifndef VOLUME_RENDERING_VOLUMETRIC_LIGHTING_GLSL
 #define VOLUME_RENDERING_VOLUMETRIC_LIGHTING_GLSL 1
 
+#include "../Transform/Eye.glsl"
+
 // TOOD:
 // Updated VL using actual papers instead of doing it myself
 // Posible sources:
@@ -20,6 +22,12 @@ const float VolumetricLightingMinHeight = 0.0f;
 
 //#define VARYING_VOLUMETRIC_LIGHTING // Applies noise to the VL density function
 
+#define VOLUMETRIC_LIGHTING
+#define VOLUMETRIC_LIGHTING_STEPS 64.0f
+#define VOLUMETRIC_OPTICAL_DEPTH_STEPS 64.0f
+
+const float VolumetricLightingStandardDeviation = 5.0f;
+
 // Computes in shadow clip space
 void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct Shading, in vec3 sundir, in vec3 suncolor, in vec3 eyePosWorld = GetEyePositionWorld(), in vec3 eyePosShadow = GetEyePositionShadow()){
     #ifdef VOLUMETRIC_LIGHTING
@@ -30,7 +38,7 @@ void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct 
     vec3 StepSize = (toEye) / VOLUMETRIC_LIGHTING_STEPS;
     vec3 StepDirection = normalize(StepSize);
     float StepLength = length(StepSize);
-    float ScatteredLight = VolumetricLightingScattering * PhaseHenyeyGreenstein(dot(sundir, WorldDirection), -0.3f);
+    float ScatteredLight = VolumetricLightingScattering * PhaseHenyeyGreenstein(dot(sundir, WorldDirection), -0.6f);
     vec3 VolumetricLightingAccum = vec3(0.0f);
     // TODO: precompute this in vert shader
     // Media properties don't change, the density does

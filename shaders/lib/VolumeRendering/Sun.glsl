@@ -2,6 +2,7 @@
 #define VOLUME_RENDERING_SUN_GLSL 1
 
 #include "SunProperties.glsl"
+#include "../Random/Noise2D.glsl"
 
 struct Light {
     vec3 Color;
@@ -17,6 +18,7 @@ vec3 ComputeLimbDarkening(in float ndist){
 }
 
 vec3 ComputeSunColor(in vec3 light, in vec3 dir){
+    //return SunColor;
     float dot_dist = dot(light, dir);
     if(dot_dist < SunSpotSize){
         return vec3(0.0f);
@@ -29,21 +31,21 @@ vec3 ComputeSunColor(in vec3 light, in vec3 dir){
     Ray SunRay;
     SunRay.Origin = ViewPos;
     SunRay.Direction = dir;
-    vec3 Transmittance = ComputeTransmittance(SunRay, dist);
+    vec3 Transmittance = Transmittance(LookUpOpticalDepth(SunRay));
     return Transmittance * SunColor * LimbDarkening;
 }
 
 // Passing in ViewTransmittance did not work
-vec3 ComputeSunColor(in vec3 light, in vec3 dir, in vec3 opticaldepth){
-    float dot_dist = dot(light, dir);
-    if(dot_dist < SunSpotSize){
-        return vec3(0.0f);
-    }
+vec3 ComputeSunColor(in vec3 light, in vec3 dir, in vec3 opticaldepth, in float dot_dist){
+    //return SunColor;
+
     dot_dist -= SunSpotSize;
     dot_dist /= SunSpotSize;
     vec3 LimbDarkening = ComputeLimbDarkening(dot_dist);
     vec3 transmittance = Transmittance(opticaldepth);
     return transmittance * SunColor * LimbDarkening;
 }
+
+#include "Moon.glsl"
 
 #endif

@@ -7,11 +7,12 @@
 #include "LightMap.glsl"
 #include "IndirectLighting.glsl"
 #include "Fog.glsl"
+#include "../VolumeRendering/VolumetricLighting.glsl"
 
 void ShadeSurfaceStruct(in SurfaceStruct Surface, inout ShadingStruct Shading, in MaskStruct masks, in vec3 sundir, in vec3 suncol){
     Shading.Sun = CalculateSunShading(Surface, suncol, masks);
     ComputeLightmap(Surface, Shading);
-    Shading.Volumetric *= suncol;
+    //ComputeVolumetricLighting(Surface, Shading, sundir, suncol);
 }
 
 const float AmbientLighting = 0.1f;
@@ -19,8 +20,9 @@ const float AmbientLighting = 0.1f;
 void ComputeColor(in SurfaceStruct Surface, inout ShadingStruct Shading){
     ComputeAmbientOcclusion(Surface, Shading);
     vec3 Lighting = max(Shading.Sun, vec3(0.0f)) + Shading.Torch + Shading.Sky + mix(AmbientLighting, 0.1f * AmbientLighting, 1.0f - Surface.Sky);
-    Shading.Color = Surface.Diffuse * vec4(Lighting, 1.0f) * Shading.AmbientOcclusion;
+    Shading.Color = vec4(Shading.Volumetric, 0.0f) + Surface.Diffuse * vec4(Lighting, 1.0f) * vec4(vec3(Shading.AmbientOcclusion), 1.0f);
     ComputeFog(Surface, Shading);
+    //Shading.Color.rgb = vec3(Shading.AmbientOcclusion);
 }
 
 #endif

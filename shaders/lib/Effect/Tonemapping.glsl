@@ -74,6 +74,7 @@ vec3 ComputeTonemapConvergence(in vec3 color){
 }
 
 // // #define TONEMAPPING_OPERATOR 5 // [0 1 2 3 4 5 6 7 8 9]
+#define TONEMAPPING_OPERATOR 0 // [0 1]
 
 // TODO:
 // - Add tonemaps from this shadertoy https://www.shadertoy.com/view/4dBcD1 
@@ -110,12 +111,22 @@ vec3 ComputeTonemap(in vec3 color){
 	return ComputeTonemapConvergence(color);
     #endif 
 	*/
+	/*
 	vec3 FilmicACES = ComputeTonemapFilmicACES(color);
 	return FilmicACES;
 	color = ComputeHighDynamicRangeExposure(color, 2.0f);
 	vec3 Reinhard = ComputeTonemapWhiteLumaReinhard(color);
 	return mix(FilmicACES, Reinhard, 0.2f);
+	*/
+	#if TONEMAPPING_OPERATOR == 0
+	return ComputeTonemapFilmicACES(color);
+	#elif TONEMAPPING_OPERATOR == 1
+	return  ComputeTonemapWhiteLumaReinhard(color);
+	#endif
 }
 
+float Grayscale(in vec3 c){
+	return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+}
 
 #endif

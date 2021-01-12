@@ -8,7 +8,6 @@
 #include "lib/Utility/Packing.glsl"
 
 varying vec3 Normal;
-flat varying vec3 LightDirection;
 flat varying vec3 CurrentSunColor;
 flat varying float fMasks; // TODO: stop being lazy and actually send the direct values for the masks instead of compressing and decompressing it
 
@@ -19,6 +18,5 @@ void main() {
     gl_TexCoord[1].st = mat2(gl_TextureMatrix[1]) * gl_MultiTexCoord1.st;
     fMasks = CompressMaskStruct(ConstructMaskStruct(mc_Entity.x));
     Normal = gl_NormalMatrix * gl_Normal;
-    LightDirection = GetLightDirection();
     CurrentSunColor = GetLightColor();
 }

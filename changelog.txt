@@ -1,3 +1,14 @@
+Update 1.0.2
+- Day night cycle added
+- Volumetric clouds are much better (an improved noise function is used)
+- 2D clouds 
+- Night sky, including moon and stars
+- Fixed issues involving depth of field
+- Improved atmosphere quality (I now use the LUT used in GPU Gems)
+- Improved shader options and profiles
+- Hardware bilinear filtering is implemented in software
+- Minor optimizations (custom uniforms)
+- Went back to old naming scheme
 Update 1.0.1.a
 - Update to how masks are handled
 - block.properties now uses block ID 50 for light sources

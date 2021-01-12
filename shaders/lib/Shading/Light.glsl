@@ -10,7 +10,10 @@
 
 // Credit to xirreal#0281 for finding these values
 const int DayEnd = 12785;
-const int NightEnd = 23251;
+const int NightEnd = 23215;
+
+bool isNight = worldTime < NightEnd && worldTime > DayEnd;
+bool isDay = !isNight;
 
 vec3 GetSunMoonDirection(in vec3 viewPos){
     return normalize(mat3(gbufferModelViewInverse) * viewPos);
@@ -27,6 +30,9 @@ float GetDayNightInterpolation(void){
 // Do mix(Day, Night, DayNightInterpolation)
 float DayNightInterpolation = GetDayNightInterpolation();
 
+#define VIBRANT_SUN_LIGHTING
+
+// TODO: optimize this and make it better
 vec3 GetLightColor(void){
     vec3 SunDirection = GetSunMoonDirection(sunPosition);
     // My guess for why materials don't look white during the day is because
@@ -34,11 +40,19 @@ vec3 GetLightColor(void){
     // But I only use a simple cosTheta diffuse BRDF
     // So I must multiply by 0.1f here
     vec3 SunColor = ComputeSunColor(SunDirection, SunDirection) + ComputeAtmosphereColor(SunDirection, SunDirection);
+    #ifndef DEFERRED1
+    #ifdef VIBRANT_SUN_LIGHTING
     SunColor *= 0.05f * vec3(0.8f, 0.9f, 1.1f);
-    //SunColor = saturate(SunColor);
-    vec3 MoonColor = vec3(0.1f, 0.15f, 0.9f); 
-
-    return SunColor;
+    #else
+    SunColor *= 0.025f * vec3(0.8f, 0.9f, 1.1f);
+    #endif
+    #endif
+    //SunColor = saturate(SunColor); 
+    if(isDay){
+        return SunColor;
+    } else{
+        return MoonColor;
+    }
 }
 
 vec3 GetLightDirection(void) {

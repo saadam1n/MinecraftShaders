@@ -7,7 +7,6 @@
 #include "lib/Utility/Packing.glsl"
 
 varying vec3 Normal;
-flat varying vec3 LightDirection;
 flat varying vec3 CurrentSunColor;
 flat varying float fMasks;
 
@@ -19,7 +18,7 @@ void main () {
     ShadeSurfaceStruct(Surface, Shading, Masks, LightDirection, CurrentSunColor); 
     ComputeColor(Surface, Shading);
     //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st).rgb;
-    /* DRAWBUFFERS:72 */
+    /* DRAWBUFFERS:71 */
     gl_FragData[0] = Shading.Color;
-    gl_FragData[1].b = 0.0f;
+    gl_FragData[1].a = fMasks;
 }

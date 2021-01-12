@@ -29,6 +29,7 @@ TODO list:
 - ~~Additional tonemap support~~
 - Fog
 - Combine deferred gbuffers and forward gbuffers into a common file
+- Improve shadow quality
 # Known issues
 - ~~Atmosphere looks bad and isn't completely physically based~~
 - Translucent items do not have proper forward rendering when dropped
@@ -51,3 +52,7 @@ This shader is based of the works of:
 - [Sebastien Hillaire - Physically Based Sky, Atmosphere and Cloud Rendering in Frostbite](https://media.contentapi.ea.com/content/dam/eacom/frostbite/files/s2016-pbs-frostbite-sky-clouds-new.pdf)
 - [Computer Graphics Forum - Efficiently Simulating the Bokeh of Polygonal Apertures in a Post-Process Depth of Field Shader](https://www.researchgate.net/publication/261860589_Efficiently_Simulating_the_Bokeh_of_Polygonal_Apertures_in_a_Post-Process_Depth_of_Field_Shader)
 - [Intel - Compute Shader HDR and Bloom](https://software.intel.com/content/www/us/en/develop/articles/compute-shader-hdr-and-bloom.html)
+- [ATI Technologies - Rendering Outdoor Light Scattering in Real Time](https://developer.amd.com/wordpress/media/2012/10/ATI-LightScattering.pdf)
+- [GPU Gems - Chapter 11. Shadow Map Antialiasing](https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing)
+- [GPU Gems 2 - Chapter 16. Accurate Atmospheric Scattering](https://developer.nvidia.com/gpugems/gpugems2/part-ii-shading-lighting-and-shadows/chapter-16-accurate-atmospheric-scattering)
+- [Wikipedia - Bilinear interpolation](https://en.wikipedia.org/wiki/Bilinear_interpolation)

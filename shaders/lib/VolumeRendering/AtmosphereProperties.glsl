@@ -11,7 +11,7 @@
 const float ScaleHeightRayleigh = 7.994f * KM_SIZE;
 const float ScaleHeightMie = 1.200f * KM_SIZE;
 
-const vec3 ScatteringRayleigh = vec3(5.8e-6, 13.5e-6, 33.1e-6); // alt val: vec3(5.5e-6, 13.0e-6, 22.4e-6) 
+const vec3 ScatteringRayleigh = vec3(5.8e-6, 13.5e-6, 33.1e-6); // alt val: vec3(5.5e-6, 13.0e-6, 22.4e-6), real val: vec3(5.8e-6, 13.5e-6, 33.1e-6)
 const vec3 AbsorptionRayleigh = vec3(0.0f); // Negligible 
 const vec3 ExtinctionRayleigh = ScatteringRayleigh + AbsorptionRayleigh;
 

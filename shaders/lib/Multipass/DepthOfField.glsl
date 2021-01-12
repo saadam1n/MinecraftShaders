@@ -3,7 +3,7 @@
 
 #include "../Utility/Uniforms.glsl"
 
-#define DOF_KERNEL_SIZE 6.0f
+#define DOF_KERNEL_SIZE 12.0f
 
 // TODO: have only a single first pass
 // Both passes use the same input
@@ -12,6 +12,13 @@ void main() {
     float CurrentDepth = texture2D(depthtex0, gl_TexCoord[0].st).r;
     float CoC0 = texture2D(colortex0, gl_TexCoord[0].st).a;
     float CoC1 = texture2D(colortex1, gl_TexCoord[0].st).a;
+
+    vec2 KernelSize0 = vec2(CoC0 / DOF_KERNEL_SIZE);
+    vec2 KernelSize1 = vec2(CoC1 / DOF_KERNEL_SIZE);
+    KernelSize0.y *= aspectRatio;
+    KernelSize1.y *= aspectRatio;
+    // This optimization causes weird effects so that is why it's commented out
+    /*
     const float CoCThreshold =  0.00001f;
     if(CoC0 < CoCThreshold || CoC1 < CoCThreshold){
         //discard;
@@ -19,6 +26,7 @@ void main() {
         gl_FragData[1] = vec4(texture2D(colortex1, gl_TexCoord[0].st).rgb, CoC1);
         return;
     }
+    */
 
     vec4 Accum0 = vec4(0.0f);
     vec4 Accum1 = vec4(0.0f);
@@ -26,7 +34,7 @@ void main() {
     int ValidSamples0 = 0;
     int ValidSamples1 = 0;
 
-    const float RotationAngle0 = radians(45.0f);
+    const float RotationAngle0 = radians(60.0f);
     const float RotationAngle1 = -RotationAngle0;
     const mat2 Rotation0 = mat2(cos(RotationAngle0), -sin(RotationAngle0), sin(RotationAngle0), cos(RotationAngle0));
     const mat2 Rotation1 = mat2(cos(RotationAngle1), -sin(RotationAngle1), sin(RotationAngle1), cos(RotationAngle1));
@@ -38,12 +46,10 @@ void main() {
         vec2 Offset1 = vec2(sample, 0.0f);
         #else
         vec2 Offset0 = Rotation0 * vec2(sample, 0.0f);
-        Offset0.y *= aspectRatio;
         vec2 Offset1 = Rotation1 * vec2(sample, 0.0f);
-        Offset1.y *= aspectRatio;
         #endif
-        Offset0 *= CoC0;
-        Offset1 *= CoC1;
+        Offset0 *= KernelSize0;
+        Offset1 *= KernelSize1;
 
         vec2 SampleCoord0 = gl_TexCoord[0].st + Offset0;
         float SampleDepth0 = texture2D(depthtex0, SampleCoord0).r;

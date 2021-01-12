@@ -8,9 +8,8 @@ flat varying float fMasks;
 
 void main(){
     vec4 color = SampleTextureAtlas(gl_TexCoord[0].st) * gl_Color;
-    //color.rgb = vec3(LumaAdjust(color.rgb));
     /* DRAWBUFFERS:012 */
-    gl_FragData[0] = color;
-    gl_FragData[1] = vec4(Normal * 0.5f + 0.5, 0.0f);
-    gl_FragData[2] = vec4(gl_TexCoord[1].st, fMasks, 1.0f);
+    gl_FragData[0].rgba = color;
+    gl_FragData[1].rgba = vec4(Normal * 0.5f + 0.5, fMasks);
+    gl_FragData[2].rgb  = vec3(gl_TexCoord[1].st, 0.0f);
 }

@@ -1,5 +1,6 @@
 #version 120
 
+#define GBUFFERS_HAND
 #define VERTEX
 
 #include "lib/Utility/Attributes.glsl"

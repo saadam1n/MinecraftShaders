@@ -8,19 +8,26 @@ struct MaskStruct {
     bool Plant;
     bool LightSource;
     bool Sun;
+    bool Hand;
 };
 
 #define SKY_BIT   1
 #define PLANT_BIT 2
 #define LIGHT_SOURCE_BIT 4
 #define SUN_BIT 8
+#define HAND_BIT 16
 
 MaskStruct ConstructMaskStruct(in float id){
     MaskStruct Masks;
     Masks.Sky = false;
-    Masks.Plant = IS_TALL_GRASS(id);
+    Masks.Plant = id == 31.0f;
     Masks.LightSource = id == 50.0f;
     Masks.Sun = false;
+    #if defined(GBUFFERS_HAND) || defined(GBUFFERS_HAND_WATER)
+    Masks.Hand = true;
+    #else
+    Masks.Hand = false;
+    #endif
     return Masks;
 }
 

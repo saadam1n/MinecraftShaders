@@ -47,8 +47,10 @@ vec4 BicubicTexture(in sampler2D tex, in vec2 coord)
     return mix( mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy);
 }
 
+#define TextureAtlas texture
+
 vec4 SampleTextureAtlas(in vec2 coords){
-    vec4 color = texture2D(texture, coords);
+    vec4 color = texture2D(TextureAtlas, coords);
     #ifdef LIGHTING_DEBUG
     color.rgb = vec3(1.0f);
     #endif
@@ -56,7 +58,7 @@ vec4 SampleTextureAtlas(in vec2 coords){
 }
 
 vec4 SampleTextureAtlas(in vec2 coords, float bias){
-    vec4 color = texture2D(texture, coords, bias);
+    vec4 color = texture2D(TextureAtlas, coords, bias);
     #ifdef LIGHTING_DEBUG
     color.rgb = vec3(1.0f);
     #endif
@@ -64,7 +66,7 @@ vec4 SampleTextureAtlas(in vec2 coords, float bias){
 }
 
 vec4 SampleTextureAtlasLOD(in vec2 coords, float lod){
-    vec4 color = texture2DLod(texture, coords, lod);
+    vec4 color = texture2DLod(TextureAtlas, coords, lod);
     #ifdef LIGHTING_DEBUG
     color.rgb = vec3(1.0f);
     #endif

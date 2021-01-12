@@ -3,7 +3,6 @@
 
 #include "../Utility/Uniforms.glsl"
 #include "../Utility/Constants.glsl"
-#include "../Internal/ShaderSettings.glsl"
 
 // A lot of these were taken from https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 

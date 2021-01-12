@@ -2,6 +2,7 @@
 #define SHADING_LIGHT_MAP_GLSL 1
 
 #include "Structures.glsl"
+#include "Light.glsl"
 #include "../Utility/Functions.glsl"
 
 // Taken from KUDA 6.5.56
@@ -53,7 +54,7 @@ void AdjustLightMap(inout SurfaceStruct surface){
 
 void ComputeLightmap(in SurfaceStruct Surface, inout ShadingStruct Shading){
     // http://planetpixelemporium.com/tutorialpages/light.html
-    const vec3 SkyColor =  ivec3(64, 156, 255) / 255.0f;
+    vec3 SkyColor = isDay ? ivec3(64, 156, 255) / 255.0f : ivec3(12, 15, 19) / 2550.0f ;
     Shading.Torch = Surface.Torch * TorchEmitColor * mix(1.0f - Surface.Sky, 1.0f, rainStrength);
     Shading.Sky = Surface.Sky * SkyColor * 1.3f;
 }
