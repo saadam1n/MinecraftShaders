@@ -23,4 +23,4 @@ value.TONEMAPPING_OPERATOR.0=ACES Filmic
 value.TONEMAPPING_OPERATOR.1=Reinhard
 
 option.COC_BLUR=Edge Blur
-
+option.HEXAGONAL_BOKEH=Hexagonal Bokeh

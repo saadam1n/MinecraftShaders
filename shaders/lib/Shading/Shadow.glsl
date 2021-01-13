@@ -89,7 +89,7 @@ vec3 ComputeShadow(in SurfaceStruct Surface){
     float DiffThresh = length(Surface.ShadowScreen.xy) + 0.10f;
     DiffThresh *= 3.0f / (shadowMapResolution / 2048.0f);
     float AdjustedShadowDepth = Surface.ShadowScreen.z - max(0.0028f * DiffThresh * ((1.0f - pow(Surface.NdotL, 0.01f)) * 3.0f) * Surface.Distortion * Surface.Distortion, 0.00015f) * 2.0f;
-    mat2 Transformation = CreateRandomRotationScreen(Surface.Screen.xy + frameTimeCounter) * SoftShadowScale; // add frameTimeCounter if you want animated noise
+    mat2 Transformation = CreateRandomRotationScreen(Surface.Screen.xy + frameTimeCounter * 0.01f) * SoftShadowScale; // add frameTimeCounter if you want animated noise
     vec3 ShadowAccum = vec3(0.0f);
     for(float y = -SHADOW_SAMPLES; y <= SHADOW_SAMPLES; y += ShadowStep){
         for(float x = -SHADOW_SAMPLES; x <= SHADOW_SAMPLES; x+= ShadowStep){

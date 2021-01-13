@@ -26,6 +26,15 @@ But in Optifine, we have limited texture space so I would have to store the 1D L
 #include <mutex>
 #include <chrono>
 
+const int LUT_Resolution = 2048;
+const int LUT_Size = LUT_Resolution * LUT_Resolution;
+const int OpticalDepthSamples = 1024; // Since I'm too lazy to do trapezoidal integration
+const double ScaleHeightRayleigh = 7994.0;
+const double ScaleHeightMie = 1200.0;
+const double EarthRadius = 6360.0e3;
+const double AtmosphereHeight = 80.0e3;
+const double AtmosphereRadius = AtmosphereHeight + EarthRadius;
+
 std::mutex ConsoleMutex;
 
 struct StopWatch {
@@ -40,10 +49,6 @@ struct StopWatch {
 	}
 	int64_t Start;
 };
-
-const int LUT_Resolution = 2048;
-const int LUT_Size = LUT_Resolution * LUT_Resolution;
-const int OpticalDepthSamples = 1024; // Since I'm too lazy to do trapezoidal integration
 
 struct Density {
 	double Rayleigh;
@@ -79,11 +84,8 @@ struct Density {
 typedef Density OpticalDepth;
 OpticalDepth* TextureData;
 
-const double ScaleHeightRayleigh = 7994.0;
-const double ScaleHeightMie = 1200.0;
-
 inline Density SampleDensity(double altitude) {
-	//altitude = fmax(altitude, -20.0);
+	altitude = fmax(altitude, -800.0);
 	Density CurrentDensity;
 	CurrentDensity.Rayleigh = exp(-altitude / ScaleHeightRayleigh);
 	CurrentDensity.Mie      = exp(-altitude / ScaleHeightMie     );
@@ -95,6 +97,49 @@ inline Density SampleDensity(double altitude) {
 	CurrentDensity.Ozone   *= 0.07;
 	return CurrentDensity;
 }
+
+template<typename T>
+class Texture1D {
+public:
+	size_t Size = 0;
+	T* Data = nullptr;
+	Texture1D(size_t elements) : Size(elements), Data(new T[elements]) {}
+	~Texture1D(void) {
+		delete[] Data;
+	}
+	void TexelWrite(uint32_t index, const T& val) {
+		Data[index] = val;
+	}
+	T TexelRead(uint32_t index) {
+		if (index > Size) {
+			index = Size;
+		}
+		if (index < 0) {
+			index = 0;
+		}
+		return Data[index];
+	}
+	T Read(double coord) {
+		double TexelCoord = Size * coord;
+		uint32_t Lower = floor(TexelCoord);
+		uint32_t Upper = ceil(TexelCoord);
+
+		T& Val0 = TexelRead(Lower);
+		T& Val1 = TexelRead(Upper);
+		float MixFactor = TexelCoord - Lower;
+		return (Val0 * MixFactor) + (Val1 * (1.0 - MixFactor));
+	}
+};
+
+static Texture1D<Density> DensityLUT = Texture1D<Density>(LUT_Resolution * OpticalDepthSamples);
+struct DensityLUT_Init {
+	DensityLUT_Init(void) {
+		for (uint32_t Index = 0; Index < DensityLUT.Size; Index++) {
+			double Altitude = AtmosphereHeight * ((double)Index / (double)DensityLUT.Size);
+			DensityLUT.TexelWrite(Index, SampleDensity(Altitude));
+		}
+	}
+}DensityLUT_Init_;
 
 struct Vec3f {
 	double x, y, z;
@@ -170,10 +215,6 @@ bool RaySphereIntersect(const Vec3f& orig, const Vec3f& dir, const double& radiu
 	return true;
 }
 
-const double EarthRadius = 6360.0e3;
-const double AtmosphereHeight = 80.0e3;
-const double AtmosphereRadius = AtmosphereHeight + EarthRadius;
-
 inline OpticalDepth ComputeOpticalDepth(double height, double vertical_angle) {
 	//vertical_angle = abs(vertical_angle);
 	OpticalDepth AccumOpticalDepth;
@@ -194,8 +235,8 @@ inline OpticalDepth ComputeOpticalDepth(double height, double vertical_angle) {
 	double RayMarchPosition = 0.0f;
 	for (int Sample = 0; Sample < OpticalDepthSamples; Sample++) {
 		Vec3f SamplePosition = StartPos + Direction * (RayMarchPosition + RayMarchStepLength * 0.5);
-		double altitude = SamplePosition.length();
-		AccumOpticalDepth += SampleDensity(altitude - EarthRadius);
+		double altitude = SamplePosition.length() - EarthRadius;
+		AccumOpticalDepth += SampleDensity(altitude);
 		RayMarchPosition += RayMarchStepLength;
 	}
 	AccumOpticalDepth = AccumOpticalDepth * RayMarchStepLength;

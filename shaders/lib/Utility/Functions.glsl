@@ -3,6 +3,12 @@
 
 //#extension GL_EXT_gpu_shader4 : enable
 
+void swap(inout float lhs, in float rhs){
+    float temp = rhs;
+    rhs = lhs;
+    lhs = temp;
+}
+
 vec3 saturate(vec3 val){
     return clamp(val, vec3(0.0f), vec3(1.0f));
 }

@@ -82,7 +82,7 @@ vec3 Transmittance(in vec3 OpticalDepth){
 #endif
 
 vec3 GetCameraPositionEarth(void){
-    return vec3(0.0f, EarthRadius, 0.0f);
+    return vec3(0.0f, EarthRadius + 1000.0f, 30000.0f);
 }
 
 vec3 LookUpOpticalDepth(in float altitude, in float vertical_angle) {
@@ -106,13 +106,12 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 ViewOptic
     dir = normalize(dir);
     vec3 ViewPos = GetCameraPositionEarth();
     float AtmosphereDistance = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
-    /*
     // Aerial perspective
     float t0, t1;
-    if(!RaySphereIntersect(ViewPos, dir, EarthRadius, t0, t1)){
-        AtmosphereDistance = t1;
+    bool IntersectEarth = RaySphereIntersect(ViewPos, dir, EarthRadius, t0, t1)  && t1 > 0.0f;
+    if(IntersectEarth){
+        AtmosphereDistance = max(t0, 0.0f);
     }
-    */
     vec3 AtmosphereIntersectionLocation = ViewPos + dir * AtmosphereDistance;
     vec3 AccumRayleigh = vec3(0.0f), AccumMie = vec3(0.0f);
     float CosTheta = dot(light, dir);     // TODO: precompute cos theta^2 for both functions
@@ -197,6 +196,9 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 ViewOptic
         AccumRayleigh += TransmittedSunLight * CurrentDensity.x;
         AccumMie      += TransmittedSunLight * CurrentDensity.y;
         RayMarchPosition += RayMarchStepLength;
+    }
+    if(IntersectEarth){
+        ViewOpticalDepth = vec3(1e10);
     }
     vec3 AtmosphereColor = SunColor * ((AccumRayleigh * ScatteringStrengthRayleigh + AccumMie * ScatteringStrengthMie)  + MultiscatterAccum) * RayMarchStepLength;
     AtmosphereColor = max(AtmosphereColor, vec3(0.0f));

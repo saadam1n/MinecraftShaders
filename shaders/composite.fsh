@@ -15,6 +15,8 @@ const bool shadowHardwareFiltering = false;
 const float ambientOcclusionLevel = 1.0f;
 #endif
 
+//#define SUN_BLOOM
+
 void main(){
     MaskStruct Masks = DecompressMaskStruct(texture2D(colortex1, gl_TexCoord[0].st).a);
 
@@ -23,7 +25,13 @@ void main(){
     
     vec3 BloomColor = vec3(0.0f);
     float Brightness = Grayscale(BaseColor);
-    if(((!Masks.Sky && Masks.LightSource) || Masks.Sun) && Brightness > 0.2f){
+    if(((!Masks.Sky && Masks.LightSource) 
+    #ifdef SUN_BLOOM
+    || Masks.Sun) 
+    #else
+    )
+    #endif
+    && Brightness > 0.2f){
         BloomColor = BaseColor;
         if(!Masks.Sun){
             BloomColor = pow(BaseColor, vec3(2.0f));

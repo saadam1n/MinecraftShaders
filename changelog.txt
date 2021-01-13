@@ -1,3 +1,8 @@
+Update 1.0.3
+- Aerial perspective
+- Improved atmosphere
+- Small changes to depth of field 
+- Tweaked shadows 
 Update 1.0.2
 - Day night cycle added
 - Volumetric clouds are much better (an improved noise function is used)

@@ -3,7 +3,7 @@
 
 #include "../Utility/Constants.glsl"
 
-#define SHADOW_MAP_BIAS 0.9f
+#define SHADOW_MAP_BIAS 0.85f
 #define SHADOW_DISTORTION // Nobody in their right minds should turn this off
 
 float DistortionFactor(in vec2 position) {

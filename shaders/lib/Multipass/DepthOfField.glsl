@@ -3,7 +3,8 @@
 
 #include "../Utility/Uniforms.glsl"
 
-#define DOF_KERNEL_SIZE 12.0f
+#define DOF_KERNEL_SIZE 12.0f 
+#define HEXAGONAL_BOKEH
 
 // TODO: have only a single first pass
 // Both passes use the same input
@@ -33,7 +34,7 @@ void main() {
 
     int ValidSamples0 = 0;
     int ValidSamples1 = 0;
-
+    
     const float RotationAngle0 = radians(60.0f);
     const float RotationAngle1 = -RotationAngle0;
     const mat2 Rotation0 = mat2(cos(RotationAngle0), -sin(RotationAngle0), sin(RotationAngle0), cos(RotationAngle0));
@@ -45,8 +46,13 @@ void main() {
         vec2 Offset0 = vec2(sample, 0.0f);
         vec2 Offset1 = vec2(sample, 0.0f);
         #else
+        #ifdef HEXAGONAL_BOKEH
         vec2 Offset0 = Rotation0 * vec2(sample, 0.0f);
         vec2 Offset1 = Rotation1 * vec2(sample, 0.0f);
+        #else
+        vec2 Offset0 = vec2(0.0f, sample);
+        vec2 Offset1 = vec2(0.0f, sample);
+        #endif
         #endif
         Offset0 *= KernelSize0;
         Offset1 *= KernelSize1;

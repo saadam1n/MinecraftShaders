@@ -19,7 +19,7 @@ float ComputeCircleOfConfusion(in float center, in float dist){
     // I keep the focal length high at 1 meter
     // This makes close up objects blurry, which is particualry useful for making the area behind translucent objects blurry
     // This allows me to put it in one pass after forward rendering has been done, but it is not the greatest solution
-    return min(ComputeCircleOfConfusion(0.424f, 1.0f, center, dist), 0.04f);
+    return min(ComputeCircleOfConfusion(0.424f, 0.5f, center, dist), 0.02f);
 }
 
 #endif
