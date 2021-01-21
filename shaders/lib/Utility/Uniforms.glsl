@@ -6,7 +6,7 @@
 
 const int shadowMapResolution = 2048; // The shadow resolution [256 512 1024 1572 2048 3072 4096 8192 16384]
 const float shadowDistance = 128; // How large the shadow map is [16 32 64 72 96 128 180 256]
-const int noiseTextureResolution = 512;
+const int noiseTextureResolution = 1024;
 
 #define ShaderPrecision highp
 
@@ -79,6 +79,9 @@ uniform float centerDepthSmooth;
 uniform float aspectRatio;
 
 uniform float eyeAltitude;
+uniform int isEyeInWater;
+
+uniform sampler2D normals;
 
 #define PrecomputedOpticalDepth depthtex2
 
@@ -93,5 +96,7 @@ uniform float CenterDistance;
 uniform vec3 LightDirection;
 uniform vec3 SunDirection;
 uniform vec3 MoonDirection;
+uniform bool isInNether;
+uniform bool isInRain;
 
 #endif

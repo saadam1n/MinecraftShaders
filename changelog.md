@@ -1,3 +1,16 @@
+Update 1.0.4
+- Screen space lens flare
+- Fixed hand depth at hand depth 1x 
+- Tinkered around with volumetric clouds a bit more
+- Some nether support
+- Changed some values for sun
+- Enabled sun bloom
+- Updated shader options
+- Chromatic aberration
+- Normal map support
+- Rain drops on camera effect
+- Clouds actually look good and perform well, thanks to [robobo1221's VL cloud shadertoy](https://www.shadertoy.com/view/MstBWs)
+- Updated readme.md
 Update 1.0.3
 - Aerial perspective
 - Improved atmosphere

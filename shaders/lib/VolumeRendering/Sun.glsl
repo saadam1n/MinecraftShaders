@@ -18,6 +18,7 @@ vec3 ComputeLimbDarkening(in float ndist){
 }
 
 vec3 ComputeSunColor(in vec3 light, in vec3 dir){
+    light = normalize(light); dir = normalize(dir);
     //return SunColor;
     float dot_dist = dot(light, dir);
     if(dot_dist < SunSpotSize){
@@ -38,7 +39,6 @@ vec3 ComputeSunColor(in vec3 light, in vec3 dir){
 // Passing in ViewTransmittance did not work
 vec3 ComputeSunColor(in vec3 light, in vec3 dir, in vec3 opticaldepth, in float dot_dist){
     //return SunColor;
-
     dot_dist -= SunSpotSize;
     dot_dist /= SunSpotSize;
     vec3 LimbDarkening = ComputeLimbDarkening(dot_dist);

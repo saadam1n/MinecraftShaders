@@ -18,6 +18,13 @@ const float FogMaxDistance = 1000000.0f;
 // - Make rain fog not affect cave fog
 
 vec3 ComputeFog(in vec3 world, in vec3 view, in vec3 color, in float sky = 1.0f){
+    if(isEyeInWater == 1){
+        //coeffs taken from https://discord.com/channels/237199950235041794/736928196162879510/800612334904541184
+        vec3 coeff = vec3(0.4f, 0.07f, 0.03f);
+        vec3 transmittance = exp(-coeff * length(view));
+
+        return transmittance * color;
+    } 
     // Extinction isn't the best word here, but whatever
     // TODO: use surface.View instead of position - cameraPosition for performance increase
     float foggyness = 1.0f - exp(-FogExtinction * min(length(view), FogMaxDistance));

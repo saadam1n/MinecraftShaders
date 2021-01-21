@@ -22,6 +22,8 @@ struct SurfaceStruct {
 
     float NdotL;
 
+    float Shininess;
+    float SpecularStrength;
 };
 
 struct ShadingStruct {
@@ -30,6 +32,7 @@ struct ShadingStruct {
     vec3 Sun;
     vec3 Torch;
     vec3 Sky;
+    vec3 Reflection;
     vec3 Volumetric;
     vec3 OpticalDepth;
 

@@ -2,6 +2,7 @@
 #define UTILITY_COLOR_ADJUST_GLSL
 
 #include "Uniforms.glsl"
+#include "TextureSampling.glsl"
 #include "../Internal/ShaderSettings.glsl"
 
 // Based on KUDA 6.5.56
@@ -29,22 +30,19 @@ vec3 ComputeFilmGrain(in vec3 color){
 const float WaterDropletSpeed = 0.1f;
 const float WaterSampleOffset = 0.0001f;
 
-vec2 ComputeWaterDropletCoords(void){
-	vec2 WaterSampleCoords = vec2(gl_TexCoord[0].s, gl_TexCoord[0].t + WaterDropletSpeed * frameTimeCounter);
-	// Now compute an offset
-	float WaterCenter = texture2D(noisetex, WaterSampleCoords).a;
-	float WaterLeft =  texture2D(noisetex, vec2(WaterSampleCoords.x - WaterSampleOffset, WaterSampleCoords.y)).a;
-	float WaterUp = texture2D(noisetex, vec2(WaterSampleCoords.x, WaterSampleCoords.y + WaterSampleOffset * 4.0f)).a;
-	vec2 WaterCoords = gl_TexCoord[0].st;
-	if((WaterCenter + WaterLeft + WaterUp) / 3.0f > 0.2f){
-		vec3 WaterNormal;
-		WaterNormal.r = WaterCenter - WaterLeft;
-		WaterNormal.g = WaterCenter - WaterUp;
-		WaterNormal.b = sqrt(1.0f - dot(WaterNormal.rg, WaterNormal.rg));
-		WaterNormal = normalize(WaterNormal);
-		WaterCoords += WaterNormal.xz / 50.0f;
-	}
-	return mix(gl_TexCoord[0].st, WaterCoords, rainStrength);
+const float WaterDropletScale = 0.05f * 256.0f/float(noiseTextureResolution);
+const vec3 WaterScreenChromaticAberation = vec3(0.5f, 1.0f, 1.5f);
+
+vec2[3] ComputeWaterDropletCoords(void){
+	vec2 NoiseCoords = gl_TexCoord[0].st;
+	NoiseCoords.y += frameTimeCounter * WaterDropletSpeed;
+	vec2 Noise = (BicubicTexture(noisetex, NoiseCoords * WaterDropletScale, noiseTextureResolution).rg * 2.0f - 1.0f) * 0.01f; // maybe add camera pos to create a moving effect while walking underwater
+	Noise.g *= aspectRatio;
+	vec2 Coords[3];
+	Coords[0] = gl_TexCoord[0].st + Noise * WaterScreenChromaticAberation.r;
+	Coords[1] = gl_TexCoord[0].st + Noise * WaterScreenChromaticAberation.g;
+	Coords[2] = gl_TexCoord[0].st + Noise * WaterScreenChromaticAberation.b;
+	return Coords;
 }
 
 float CalculateExposure(void){

@@ -14,6 +14,8 @@
 varying vec3 ViewDirection;
 flat varying vec3 LightColor;
 
+//#define CLOUD_2D_ENABLED // Off by default until I can make better clouds
+
 void main(){
     float fMasks = texture2D(colortex1, gl_TexCoord[0].st).a;
     MaskStruct Masks = DecompressMaskStruct(fMasks);
@@ -36,11 +38,13 @@ void main(){
         }
         if(isNight) Color.rgb += ComputeNightSky(ViewDirection, WorldDirection);
         Color.a = 1.0f;
+        #ifdef CLOUD_2D_ENABLED
+        Color.rgb = Draw2DClouds(WorldDirection, isNight? MoonSkyColor : LightColor, Color.rgb);
+        #endif
         if(WorldDirection.y > 0.0f){
             Color.rgb = ComputeCloudColor(GetEyePositionWorld(), WorldDirection, SunDirection, LightColor, Color.rgb);
             
         }
-        Color.rgb = Draw2DClouds(WorldDirection, isNight? MoonSkyColor * 100.0f : LightColor, Color.rgb);
     } else {
         Color = texture2D(colortex7, gl_TexCoord[0].st);
     }

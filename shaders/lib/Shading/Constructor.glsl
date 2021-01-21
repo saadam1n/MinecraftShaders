@@ -16,22 +16,27 @@ vec3 GetScreenCoords(in vec4 fragcoord){
     return vec3(Screen, fragcoord.z);
 }
 
-SurfaceStruct ConstructSurfaceStructForward(in vec3 fragcoord, in vec3 normal, in vec3 l){
+const float WaterShininess = 128.0f;
+
+SurfaceStruct ConstructSurfaceStructForward(in vec3 fragcoord, in vec3 normal, in vec3 l, in MaskStruct Masks){
     SurfaceStruct Surface;
 
     Surface.Diffuse = SampleTextureAtlas(gl_TexCoord[0].st);
     // If the alpha channel does not have the gamma backed into it, someone please let me knwo
     Surface.Diffuse.rgba = pow(Surface.Diffuse.rgba, vec4(2.2f));
-    Surface.ViewNormal = normal;
-    Surface.Normal = mat3(gbufferModelViewInverse) * Surface.ViewNormal;
+    Surface.Normal =  normal;
+    Surface.ViewNormal = mat3(gbufferModelView) * normal;
+    //Surface.Diffuse.rgb = Surface.Normal;
 
     vec2 LightMap = gl_TexCoord[1].st; 
     Surface.Torch = LightMap.x;
     Surface.Sky = LightMap.y;
     AdjustLightMap(Surface);
 
+    if(Masks.Hand) fragcoord.z += 0.38f;
+
     // In a way the screen space coords contain the texcoords
-    Surface.Screen = vec3(fragcoord.xy, fragcoord.z);
+    Surface.Screen = vec3(fragcoord);
     Surface.Clip = Surface.Screen * 2.0f - 1.0f;
     vec4 UnDivW = gbufferProjectionInverse * vec4(Surface.Clip, 1.0f);
     Surface.View = UnDivW.xyz / UnDivW.w;
@@ -44,24 +49,36 @@ SurfaceStruct ConstructSurfaceStructForward(in vec3 fragcoord, in vec3 normal, i
 
     Surface.NdotL = dotunorm(Surface.Normal, l);
 
+    if(Masks.Water){
+        Surface.Shininess = WaterShininess;
+        Surface.SpecularStrength = 1.0f;
+    } else {
+        Surface.Shininess = 1.0f;
+        Surface.SpecularStrength = 0.0f;
+    }
+
     return Surface;
 }
 
-SurfaceStruct ConstructSurfaceStructDeferred(in vec2 texcoords, in vec3 l){
+SurfaceStruct ConstructSurfaceStructDeferred(in vec2 texcoords, in vec3 l, in MaskStruct Masks){
     SurfaceStruct Surface;
 
     Surface.Diffuse = texture2D(colortex0, texcoords);
     Surface.Diffuse.rgb = pow(Surface.Diffuse.rgb, vec3(2.2f));
-    Surface.ViewNormal = texture2D(colortex1, texcoords).rgb * 2.0f - 1.0f;
-    Surface.Normal = mat3(gbufferModelViewInverse) * Surface.ViewNormal;
+    Surface.Normal = normalize(texture2D(colortex1, texcoords).rgb * 2.0f - 1.0f);
+    Surface.ViewNormal = mat3(gbufferModelView) * Surface.Normal;
+    //Surface.Diffuse.rgb = Surface.Normal;
 
     vec2 LightMap = texture2D(colortex2, texcoords).st; 
     Surface.Torch = LightMap.x;
     Surface.Sky = LightMap.y;
     AdjustLightMap(Surface);
 
+    float Depth = texture2D(depthtex0, texcoords).r;
+    if(Masks.Hand) Depth += 0.38f; // Continuum Shader's method 
+
     // In a way the screen space coords contain the texcoords
-    Surface.Screen = vec3(texcoords, texture2D(depthtex0, texcoords).r);
+    Surface.Screen = vec3(texcoords, Depth);
     Surface.Clip = Surface.Screen * 2.0f - 1.0f;
     vec4 UnDivW = gbufferProjectionInverse * vec4(Surface.Clip, 1.0f);
     Surface.View = UnDivW.xyz / UnDivW.w;
@@ -73,6 +90,14 @@ SurfaceStruct ConstructSurfaceStructDeferred(in vec2 texcoords, in vec3 l){
     Surface.ShadowScreen = DistortShadowSample(Surface.ShadowClip);
 
     Surface.NdotL = dotunorm(Surface.Normal, l);
+
+    if(Masks.Water){
+        Surface.Shininess = WaterShininess;
+        Surface.SpecularStrength = 1.0f;
+    } else {
+        Surface.Shininess = 1.0f;
+        Surface.SpecularStrength = 0.0f;
+    }
 
     return Surface;
 }

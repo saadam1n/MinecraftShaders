@@ -227,4 +227,18 @@ float GenerateNoise2D_3(vec2 uv, float persistence = 0.7f, int octaves = 8)
     return clamp(total/maxValue, 0.0f, 1.0f);
 }
 
+float GenerateNoise2D_4(in vec2 p){
+	//p = fract(p);
+	return texture2D(noisetex, p.xy * 0.1f).r;
+}
+
+float GenerateNoise2D_5(in vec2 p){
+    float Octaves[4];
+    Octaves[0] = GenerateNoise2D_4(p * -2.00f  ) * 0.125f;
+    Octaves[1] = GenerateNoise2D_4(p *  2.00f  ) * 0.125f;
+    Octaves[2] = GenerateNoise2D_4(p *  0.10f  ) * 0.250f;
+    Octaves[3] = GenerateNoise2D_4(p * -0.10f  ) * 0.500f;
+    return Octaves[0] + Octaves[1] + Octaves[2] + Octaves[3];
+}
+
 #endif

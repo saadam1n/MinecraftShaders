@@ -8,7 +8,7 @@
 #include "../VolumeRendering/Sky.glsl"
 #include "../Misc/Masks.glsl"
 
-// Credit to xirreal#0281 for finding these values
+// Credit to xirreal for finding these values
 const int DayEnd = 12785;
 const int NightEnd = 23215;
 

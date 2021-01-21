@@ -15,6 +15,7 @@ const float ShadowStep = 1.0f / SHADOW_QUALITY;
 const float ShadowQualitySamplesPerSide =  (2*(SHADOW_SAMPLES * SHADOW_QUALITY)+1);
 const float ShadowQualityArea = ShadowQualitySamplesPerSide * ShadowQualitySamplesPerSide;
 const float ShadowArea = ShadowSamplesPerSide * ShadowSamplesPerSide;
+#define SHADOW_BIAS 0.0028 // [ 0.002 0.0021 0.0022 0.0023 0.0024 0.0025 0.0026 0.0027 0.0028 0.0029 0.003 0.0031 0.0032 0.0033 0.0034 0.0035 0.01]
 
 const float FadeBegin = 0.95f;
 const float FadeEnd = 1.0f - FadeBegin;
@@ -79,8 +80,23 @@ vec3 ComputeVisibility(in vec3 ShadowCoord){
     return ShadowInterpolateY;
 }
 
+vec2 ComputeCircularKernel(in int sample){
+    // First compute a random place to sample from noistex
+    vec2 NoiseCoords = gl_TexCoord[0].st + float(sample) / SHADOW_SAMPLES; 
+    // Sample noise
+    vec3 NoiseData = texture2D(noisetex, NoiseCoords).rgb;
+    /*
+    My idea is basically this:
+    we first obtain a random direction, which is calculated by  normalize(NoiseData.xy * 2.0f - 1.0f)
+    then we take that random direction and modulate it to create a sample on it using a random length value
+    the value in this case is NoiseData.z
+    */
+    vec2 NoiseVec = normalize(NoiseData.xy * 2.0f - 1.0f);
+    return NoiseVec * NoiseData.z;
+}
+
 vec3 ComputeShadow(in SurfaceStruct Surface){
-    if(rainStrength > 0.99f){
+    if(rainStrength > 0.99f || isInNether){
         return vec3(0.0f);
     }
     if(!IsInRange(Surface.ShadowScreen, vec3(0.0f), vec3(1.0f))){
@@ -88,12 +104,12 @@ vec3 ComputeShadow(in SurfaceStruct Surface){
     }
     float DiffThresh = length(Surface.ShadowScreen.xy) + 0.10f;
     DiffThresh *= 3.0f / (shadowMapResolution / 2048.0f);
-    float AdjustedShadowDepth = Surface.ShadowScreen.z - max(0.0028f * DiffThresh * ((1.0f - pow(Surface.NdotL, 0.01f)) * 3.0f) * Surface.Distortion * Surface.Distortion, 0.00015f) * 2.0f;
-    mat2 Transformation = CreateRandomRotationScreen(Surface.Screen.xy + frameTimeCounter * 0.01f) * SoftShadowScale; // add frameTimeCounter if you want animated noise
+    float AdjustedShadowDepth = Surface.ShadowScreen.z - (max(SHADOW_BIAS * DiffThresh * ((1.0f - pow(Surface.NdotL, 0.01f)) * 3.0f) * Surface.Distortion * Surface.Distortion, 0.00015f) * 2.0f);
+    mat2 Transformation = CreateRandomRotationScreen(Surface.Screen.xy + frameTimeCounter) * SoftShadowScale; // add frameTimeCounter if you want animated noise
     vec3 ShadowAccum = vec3(0.0f);
     for(float y = -SHADOW_SAMPLES; y <= SHADOW_SAMPLES; y += ShadowStep){
         for(float x = -SHADOW_SAMPLES; x <= SHADOW_SAMPLES; x+= ShadowStep){
-            ShadowAccum += ComputeVisibility(vec3(Surface.ShadowScreen.xy + vec2(x, y) * Transformation, AdjustedShadowDepth));
+            ShadowAccum += ComputeVisibility(vec3(Surface.ShadowScreen.xy + Transformation * vec2(x, y), AdjustedShadowDepth));
         }
     }
     ShadowAccum *= 1.0f / ShadowQualityArea;

@@ -1,0 +1,1 @@
+99% of the code in this folder is not mine, because who writes their own noise functions? Most of this is copy pasted from shader toy and other websites, however, I tried to give credit where I could

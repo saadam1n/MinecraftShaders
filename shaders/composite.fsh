@@ -15,7 +15,7 @@ const bool shadowHardwareFiltering = false;
 const float ambientOcclusionLevel = 1.0f;
 #endif
 
-//#define SUN_BLOOM
+#define SUN_BLOOM
 
 void main(){
     MaskStruct Masks = DecompressMaskStruct(texture2D(colortex1, gl_TexCoord[0].st).a);
@@ -49,7 +49,8 @@ void main(){
         CircleOfConfusion = ComputeCircleOfConfusion(CenterDistance, PixelDistance);
     } 
 
-    /* DRAWBUFFERS:02 */
+    /* DRAWBUFFERS:023 */
     gl_FragData[0] = vec4(BloomColor, 1.0f);
     gl_FragData[1] = vec4(CircleOfConfusion, 0.0f, 0.0f, 1.0f);
+    gl_FragData[2] = vec4(BloomColor * 0.2f, 1.0f); // keep a copy for lens flare
 }

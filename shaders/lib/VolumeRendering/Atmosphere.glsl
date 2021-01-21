@@ -9,7 +9,7 @@
 #include "../Geometry/Sphere.glsl"
 #include "../Utility/ColorAdjust.glsl"
 
-#define INSCATTERING_STEPS 64 // Inscattering steps [ 16 32 48 64 96 128 192 256 384 512]
+#define INSCATTERING_STEPS 64 // Inscattering steps [ 10 12 16 32 48 64 96 128 192 256 384 512 1024 2048]
 
 // Optical depth:
 // x - rayleigh
@@ -82,7 +82,9 @@ vec3 Transmittance(in vec3 OpticalDepth){
 #endif
 
 vec3 GetCameraPositionEarth(void){
-    return vec3(0.0f, EarthRadius + 1000.0f, 30000.0f);
+    float y = EarthRadius + (1070.74320039f-64.0f) + eyeAltitude;// * sin(frameTimeCounter);
+    //y += eyeAltitude - 64.0f;
+    return vec3(0.0f, y, 0.0f);
 }
 
 vec3 LookUpOpticalDepth(in float altitude, in float vertical_angle) {
@@ -102,7 +104,12 @@ vec3 ComputeViewOpticalDepth(in Ray SampleRay, in vec3 cameraopticaldepth){
 
 //#define MULTISCATTERING
 
+vec3 EarthColor = vec3(0.0f, 1.0f, 0.0f) * 0.0f;
+
 vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 ViewOpticalDepth) {
+    if(isInNether){
+        return vec3(0.0f);
+    }
     dir = normalize(dir);
     vec3 ViewPos = GetCameraPositionEarth();
     float AtmosphereDistance = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
@@ -197,11 +204,13 @@ vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 ViewOptic
         AccumMie      += TransmittedSunLight * CurrentDensity.y;
         RayMarchPosition += RayMarchStepLength;
     }
-    if(IntersectEarth){
-        ViewOpticalDepth = vec3(1e10);
-    }
     vec3 AtmosphereColor = SunColor * ((AccumRayleigh * ScatteringStrengthRayleigh + AccumMie * ScatteringStrengthMie)  + MultiscatterAccum) * RayMarchStepLength;
     AtmosphereColor = max(AtmosphereColor, vec3(0.0f));
+    if(IntersectEarth){
+        vec3 ViewTransmittance = Transmittance(ViewOpticalDepth);
+        AtmosphereColor += EarthColor * ViewTransmittance; // TODO: diffuse shading of the ground
+        ViewOpticalDepth = vec3(1e10);
+    }
     return AtmosphereColor;
 }
 
@@ -221,6 +230,29 @@ vec3 ComputeAtmosphericScatteringATI(in vec3 light, in vec3 view, out vec3 viewo
     vec3 Extinction = exp(-viewopticaldepth);
     vec3 InScattering = Extinction * (1.0f - Extinction) * (PhaseRayleigh(costheta) + PhaseMie(costheta)) / TotalScatter;
     return  1e-2 * (Extinction  + InScattering);
+}
+
+// Approximated sky, based on VOID 2.0 Dev shader
+// l - light dir
+// v - view dir
+// o - optical depth
+// This from my understanding is basically a single ray march step shader
+vec3 ComputeAtmosphereicScatteringVOID2(in vec3 l, in vec3 v, out vec3 o){
+    // Just to be safe
+    l = normalize(l);
+    v = normalize(v);
+    // First we start by computing the optical depth
+    // VOID 2.0 Dev uses a special function for this
+    vec3 OpticalDepth = exp2(-0.1f * v) * (1.5f - dot(v, vec3(0.0f, 1.0f, 0.0f)));// Fill in later
+
+
+    // Then we compute scattered light
+    float cosTheta = dot(l, v);
+    vec4 ScatteredLight;
+    ScatteredLight.xyz = OpticalDepth.x * PhaseRayleigh(cosTheta) * vec3(1.0f);
+    ScatteredLight.w = OpticalDepth.y * PhaseMie(cosTheta);
+
+    return ScatteredLight.xyz;
 }
 
 #endif

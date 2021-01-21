@@ -8,6 +8,8 @@ option.shadowDistance=Shadow Render Distance
 option.SHADOW_SAMPLES=Shadow Blur Size
 value.SHADOW_SAMPLES.0.0=Hard Shadows
 option.SHADOW_QUALITY=Shadow Blur Quality
+option.shadowIntervalSize = Shadow Adjust Size
+option.SHADOW_BIAS=Shadow Offset
 option.VIBRANT_SUN_LIGHTING=Vibrant Sun Lighting
 option.HARDWARE_SHADOW_FILTERING=Hardware Accelerated Shadows
 
@@ -17,6 +19,7 @@ option.MULTISCATTERING=Accurate Atmosphere Simulation
 option.VOLUMETRIC_CLOUDS=Volumetric Clouds
 option.CLOUD_INSCATTERING_STEPS=Cloud Quality 0
 option.CLOUD_LIGHT_STEPS=Cloud Quality 1
+option.CLOUD_2D_ENABLED=2D Clouds
 
 option.TONEMAPPING_OPERATOR=Tonemapping Operator 
 value.TONEMAPPING_OPERATOR.0=ACES Filmic
@@ -24,3 +27,6 @@ value.TONEMAPPING_OPERATOR.1=Reinhard
 
 option.COC_BLUR=Edge Blur
 option.HEXAGONAL_BOKEH=Hexagonal Bokeh
+option.DOF_KERNEL_SIZE=DOF Samples
+
+option.CHROMATIC_ABERATION_MULT=Chromatic Aberration Strength

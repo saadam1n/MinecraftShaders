@@ -14,7 +14,7 @@ bool UnpackMask(int ival, const int bit){
 }
 
 bool UnpackMask(float fval, const int bit){
-    return bool(int(fval * 65535.0f) & bit);
+    return UnpackMask(int(fval * 65535.0f), bit);
 }
 
 float CompressMaskStruct(in MaskStruct masks){
@@ -24,6 +24,7 @@ float CompressMaskStruct(in MaskStruct masks){
     imasks |= PackMask(masks.LightSource, LIGHT_SOURCE_BIT);
     imasks |= PackMask(masks.Sun, SUN_BIT);
     imasks |= PackMask(masks.Hand, HAND_BIT);
+    imasks |= PackMask(masks.Water, WATER_BIT);
     float fmasks = float(imasks) / 65535.0f;
     return fmasks;
 }
@@ -36,6 +37,7 @@ MaskStruct DecompressMaskStruct(in float fmasks){
     UnpackedMasks.LightSource = UnpackMask(imasks, LIGHT_SOURCE_BIT);
     UnpackedMasks.Sun = UnpackMask(imasks, SUN_BIT);
     UnpackedMasks.Hand = UnpackMask(imasks, HAND_BIT);
+    UnpackedMasks.Water = UnpackMask(imasks, WATER_BIT);
     return UnpackedMasks;
 }
 

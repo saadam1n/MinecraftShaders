@@ -17,5 +17,5 @@ void main(){
     gl_TexCoord[1].st = mat2(gl_TextureMatrix[1]) * gl_MultiTexCoord1.st;
     gl_FrontColor = gl_Color;
     fMasks = CompressMaskStruct(ConstructMaskStruct(mc_Entity.x));
-    Normal = gl_NormalMatrix * gl_Normal;
+    Normal = mat3(gbufferModelViewInverse) * gl_NormalMatrix * gl_Normal;
 }

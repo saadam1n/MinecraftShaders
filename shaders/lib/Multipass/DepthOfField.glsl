@@ -3,7 +3,7 @@
 
 #include "../Utility/Uniforms.glsl"
 
-#define DOF_KERNEL_SIZE 12.0f 
+#define DOF_KERNEL_SIZE 12 // [3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30]
 #define HEXAGONAL_BOKEH
 
 // TODO: have only a single first pass
@@ -11,23 +11,13 @@
 
 void main() {
     float CurrentDepth = texture2D(depthtex0, gl_TexCoord[0].st).r;
-    float CoC0 = texture2D(colortex0, gl_TexCoord[0].st).a;
-    float CoC1 = texture2D(colortex1, gl_TexCoord[0].st).a;
+    float CoC0 = texture2D(colortex1, gl_TexCoord[0].st).a;
+    float CoC1 = texture2D(colortex2, gl_TexCoord[0].st).a;
 
     vec2 KernelSize0 = vec2(CoC0 / DOF_KERNEL_SIZE);
     vec2 KernelSize1 = vec2(CoC1 / DOF_KERNEL_SIZE);
     KernelSize0.y *= aspectRatio;
     KernelSize1.y *= aspectRatio;
-    // This optimization causes weird effects so that is why it's commented out
-    /*
-    const float CoCThreshold =  0.00001f;
-    if(CoC0 < CoCThreshold || CoC1 < CoCThreshold){
-        //discard;
-        gl_FragData[0] = vec4(texture2D(colortex0, gl_TexCoord[0].st).rgb, CoC0);
-        gl_FragData[1] = vec4(texture2D(colortex1, gl_TexCoord[0].st).rgb, CoC1);
-        return;
-    }
-    */
 
     vec4 Accum0 = vec4(0.0f);
     vec4 Accum1 = vec4(0.0f);
@@ -59,7 +49,7 @@ void main() {
 
         vec2 SampleCoord0 = gl_TexCoord[0].st + Offset0;
         float SampleDepth0 = texture2D(depthtex0, SampleCoord0).r;
-        vec4 SampleColor0 = texture2D(colortex0, SampleCoord0);
+        vec4 SampleColor0 = texture2D(colortex1, SampleCoord0);
         // Solution to intensity leakage proposed by L. McIntosh et al
         if(!(SampleDepth0 < CurrentDepth && SampleColor0.a > CoC0)){
             Accum0.rgb += SampleColor0.rgb;
@@ -68,7 +58,7 @@ void main() {
         
         vec2 SampleCoord1 = gl_TexCoord[0].st + Offset1;
         float SampleDepth1 = texture2D(depthtex0, SampleCoord1).r;
-        vec4 SampleColor1= texture2D(colortex1, SampleCoord1);
+        vec4 SampleColor1= texture2D(colortex2, SampleCoord1);
         // Solution to intensity leakage proposed by L. McIntosh et al
         if(!(SampleDepth1 < CurrentDepth && SampleColor1.a > CoC1)){
             Accum1.rgb += SampleColor1.rgb;
@@ -83,7 +73,7 @@ void main() {
     // Instead use the solution proposed by Hammon
     Accum0.a = CoC0;
     Accum1.a = CoC1;
-    /* DRAWBUFFERS:01 */
+    /* DRAWBUFFERS:12 */
     gl_FragData[0] = Accum0;
     gl_FragData[1] = Accum1;
 }

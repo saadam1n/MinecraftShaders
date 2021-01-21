@@ -40,7 +40,7 @@ float ComputeLensFlareCircle(in vec2 light, const float blend, in float radius){
     return ComputeLensFlareCircle(mix(light, vec2(0.5f), blend), radius);
 }
 
-vec3 ComputeLensFlare(void){
+vec3 ComputeLensFlare0(void){
     float SunDot = dot(normalize(sunPosition), vec3(0.0f, 0.0f, -1.0f));
     if(SunDot < -0.4f){
         return vec3(0.0f);
@@ -59,6 +59,13 @@ vec3 ComputeLensFlare(void){
     LensFlareAccum += ComputeLensFlareCircle(SunPos, 1.15f, 0.08f) * vec3(0.7f , 0.7f, 0.1f ) ;
     LensFlareAccum += ComputeLensFlareCircle(SunPos, 1.45f, 0.09f) * vec3(0.15f , 0.4f, 0.9f ) ;
     return LensFlareAccum * 0.3f * SunDot;
+}
+
+const bool colortex7GenerateMipmap = true;
+
+vec3 ComputeLensFlare1(void){
+    vec2 GhostDirection = vec2(0.5f) - gl_TexCoord[0].st;
+    return vec3(0.0f);
 }
 
 #endif

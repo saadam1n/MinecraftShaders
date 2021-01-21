@@ -18,9 +18,8 @@ vec4 Cubic(float x)
     return w / 6.f;
 }
 
-vec4 BicubicTexture(in sampler2D tex, in vec2 coord)
+vec4 BicubicTexture(in sampler2D tex, in vec2 coord, int resolution = 64)
 {
-	int resolution = 64;
 
 	coord *= resolution;
 

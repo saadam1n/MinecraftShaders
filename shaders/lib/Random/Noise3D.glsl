@@ -15,14 +15,14 @@ float GenerateNoise3D_0(in vec3 pos) {
 	vec3 p = floor(pos);
 	vec3 f = fract(pos);
 
-	vec2 uv =  (p.xy + p.z * vec2(17.0f)) + f.xy;
-	vec2 uv2 = (p.xy + (p.z + 1.0f) * vec2(17.0f)) + f.xy;
+	vec2 uv =  (p.xz + p.y * vec2(17.0f)) + f.xz;
+	vec2 uv2 = (p.xz + (p.y + 1.0f) * vec2(17.0f)) + f.xz;
 
 	vec2 coord =  (uv  + 0.5f) / noiseTextureResolution;
 	vec2 coord2 = (uv2 + 0.5f) / noiseTextureResolution;
 	float xy1 = texture2D(noisetex, coord).x;
 	float xy2 = texture2D(noisetex, coord2).x;
-	return mix(xy1, xy2, f.z);
+	return mix(xy1, xy2, f.y);
 }
 
 //	<https://www.shadertoy.com/view/4dS3Wd>
@@ -561,7 +561,7 @@ float gradientNoise(vec3 x, float freq)
 }
 
 // Tileable 3D worley noise
-float worleyNoise(vec3 uv, float freq)
+float GenerateNoise3D_14(vec3 uv, float freq)
 {    
     vec3 id = floor(uv);
     vec3 p = fract(uv);
@@ -587,7 +587,7 @@ float worleyNoise(vec3 uv, float freq)
 }
 
 // Fbm for Perlin noise based on iq's blog
-float perlinfbm(vec3 p, float freq, int octaves)
+float GenerateNoise3D_13(vec3 p, float freq, int octaves)
 {
     float G = exp2(-.85);
     float amp = 1.;
@@ -602,13 +602,14 @@ float perlinfbm(vec3 p, float freq, int octaves)
     return noise;
 }
 
+
 // Tileable Worley fbm inspired by Andrew Schneider's Real-Time Volumetric Cloudscapes
 // chapter in GPU Pro 7.
 float GenerateNoise3D_9(vec3 p, float freq = 4.0f)
 {
-    return worleyNoise(p*freq, freq) * .625 +
-        	 worleyNoise(p*freq*2., freq*2.) * .25 +
-        	 worleyNoise(p*freq*4., freq*4.) * .125;
+    return GenerateNoise3D_14(p*freq, freq) * .625 +
+        	 GenerateNoise3D_14(p*freq*2., freq*2.) * .25 +
+        	 GenerateNoise3D_14(p*freq*4., freq*4.) * .125;
 }
 
 float GenerateNoise3D_10(vec3 uv, float persistence = 0.7f, int octaves = 8){
@@ -701,7 +702,7 @@ float GenerateNoise3D_11(vec3 p){
 
 float GenerateNoise3D_12(vec3 p) {
 	const float freq = 4.0f;
-	float pfbm= mix(1., perlinfbm(vec3(p), 4., 7), .5);
+	float pfbm= mix(1., GenerateNoise3D_13(vec3(p), 4., 7), .5);
     pfbm = abs(pfbm * 2. - 1.); // billowy perlin noise
 	vec4 col;
 	col.g += GenerateNoise3D_9(p, freq);
@@ -719,6 +720,267 @@ float GenerateNoise3D_12(vec3 p) {
     float cloud = remap(perlinWorley, wfbm - 1., 1., 0., 1.);
     cloud = remap(cloud, .85, 1., 0., 1.); // fake cloud coverage
 	return cloud;
+}
+
+// https://www.shadertoy.com/view/4sfGzS 
+
+float GenerateNoise3D_15( in vec3 x ) {
+    vec3 i = floor(x);
+    vec3 f = fract(x);
+	f = f*f*(3.0-2.0*f);
+	vec2 uv = (i.xy+vec2(37.0,17.0)*i.z) + f.xy;
+	vec2 rg = texture2D(noisetex, (uv+0.5)/256.0).yx;
+	return mix( rg.x, rg.y, f.z );
+}
+
+
+float GenerateNoise3D_16( in vec3 pos ) {
+	const mat3 m = mat3( 0.00,  0.80,  0.60,
+                    -0.80,  0.36, -0.48,
+                    -0.60, -0.48,  0.64 );
+	float f = 0.0f;
+	vec3 q = 8.0*pos;
+    f  = 0.5000*noise( q ); q = m*q*2.01;
+    f += 0.2500*noise( q ); q = m*q*2.02;
+    f += 0.1250*noise( q ); q = m*q*2.03;
+    f += 0.0625*noise( q ); q = m*q*2.01;
+	return f;
+}
+
+// https://www.shadertoy.com/view/MstBWs
+float GenerateNoise3D_17(vec3 pos) 
+{
+    float p = floor(pos.z);
+    float f = pos.z - p;
+    
+    const float invNoiseRes = 1.0 / noiseTextureResolution;
+    
+    float zStretch = 17.0 * invNoiseRes;
+    
+    vec2 coord = pos.xy * invNoiseRes + (p * zStretch);
+    
+    vec2 noise = vec2(texture2D(noisetex, coord).x,
+					  texture2D(noisetex, coord + zStretch).x);
+    
+    return mix(noise.x, noise.y, f);
+}
+
+const float CloudSpeed = 0.002;
+const float CloudDenisty = 1.0f;
+
+float GenerateNoise3D_18(vec3 p) {
+	const float earthRadius = 6371000.0;
+    p = vec3(p.x, length(p + vec3(0.0, 100000.0f, 0.0)) - 100000.0f, p.z);
+  
+    
+    float time = frameTimeCounter * CloudSpeed;
+    vec3 movement = vec3(time, 0.0, time);
+    
+    vec3 cloudCoord = (p * 0.001) + movement;
+    
+	float noise = GenerateNoise3D_17(cloudCoord) * 0.5;
+    	  noise += GenerateNoise3D_17(cloudCoord * 2.0 + movement) * 0.25;
+    	  noise += GenerateNoise3D_17(cloudCoord * 7.0 - movement) * 0.125;
+    	  noise += GenerateNoise3D_17((cloudCoord + movement) * 16.0) * 0.0625;
+    
+    const float top = 0.004;
+    const float bottom = 0.01;
+    
+   // float horizonHeight = p.y - cloudMinHeight;
+    //float treshHold = (1.0 - exp2(-bottom * horizonHeight)) * exp2(-top * horizonHeight);
+    
+    float clouds = smoothstep(0.55, 0.6, noise);
+        //  clouds *= treshHold;
+    
+    return clouds * CloudDenisty;
+}
+
+// https://www.shadertoy.com/view/Xttcz2 
+
+vec3 mod289(vec3 x) {
+  return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+
+vec4 permute19(vec4 x) {
+     return mod289(((x*34.0)+1.0)*x);
+}
+
+vec4 taylorInvSqrt19(vec4 r)
+{
+  return 1.79284291400159 - 0.85373472095314 * r;
+}
+
+
+float GenerateNoise3D_19(vec3 v)
+  { 
+  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
+  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+
+// First corner
+  vec3 i  = floor(v + dot(v, C.yyy) );
+  vec3 x0 =   v - i + dot(i, C.xxx) ;
+
+// Other corners
+  vec3 g = step(x0.yzx, x0.xyz);
+  vec3 l = 1.0 - g;
+  vec3 i1 = min( g.xyz, l.zxy );
+  vec3 i2 = max( g.xyz, l.zxy );
+
+  //   x0 = x0 - 0.0 + 0.0 * C.xxx;
+  //   x1 = x0 - i1  + 1.0 * C.xxx;
+  //   x2 = x0 - i2  + 2.0 * C.xxx;
+  //   x3 = x0 - 1.0 + 3.0 * C.xxx;
+  vec3 x1 = x0 - i1 + C.xxx;
+  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y
+  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y
+
+// Permutations
+  i = mod289(i); 
+  vec4 p = permute19( permute19( permute19( 
+             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
+           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
+           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+
+// Gradients: 7x7 points over a square, mapped onto an octahedron.
+// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
+  float n_ = 0.142857142857; // 1.0/7.0
+  vec3  ns = n_ * D.wyz - D.xzx;
+
+  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)
+
+  vec4 x_ = floor(j * ns.z);
+  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)
+
+  vec4 x = x_ *ns.x + ns.yyyy;
+  vec4 y = y_ *ns.x + ns.yyyy;
+  vec4 h = 1.0 - abs(x) - abs(y);
+
+  vec4 b0 = vec4( x.xy, y.xy );
+  vec4 b1 = vec4( x.zw, y.zw );
+
+  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;
+  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;
+  vec4 s0 = floor(b0)*2.0 + 1.0;
+  vec4 s1 = floor(b1)*2.0 + 1.0;
+  vec4 sh = -step(h, vec4(0, 0, 0, 0));
+
+  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+
+  vec3 p0 = vec3(a0.xy,h.x);
+  vec3 p1 = vec3(a0.zw,h.y);
+  vec3 p2 = vec3(a1.xy,h.z);
+  vec3 p3 = vec3(a1.zw,h.w);
+
+//Normalise gradients
+  vec4 norm = taylorInvSqrt19(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+  p0 *= norm.x;
+  p1 *= norm.y;
+  p2 *= norm.z;
+  p3 *= norm.w;
+
+// Mix final noise value
+  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+  m = m * m;
+  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), 
+                                dot(p2,x2), dot(p3,x3) ) );
+  }
+
+#define DECL_FBM_FUNC(_name, _octaves, _basis) float _name(vec3 pos, float lacunarity, float init_gain, float gain) { vec3 p = pos; float H = init_gain; float t = 0.; for (int i = 0; i < _octaves; i++) { t += _basis * H; p *= lacunarity; H *= gain; } return t; }
+
+DECL_FBM_FUNC(GenerateNoise3D_22, 4, GenerateNoise3D_19(p))
+DECL_FBM_FUNC(GenerateNoise3D_23, 5, abs(GenerateNoise3D_19(p)))
+
+float GenerateNoise3D_20(in vec3 p){
+	float XY = GenerateNoise2D_5(p.xz);
+	float XZ = GenerateNoise2D_5(p.xy);
+	float YZ = GenerateNoise2D_5(p.yz);
+	//p = fract(p);
+	return pow(XY * XZ * YZ, 1.0f / 3.0f);
+}
+
+float GenerateNoise3D_21(in vec3 p){
+	vec2 TexCoord;
+	TexCoord = p.xz;
+	return GenerateNoise2D_5(TexCoord);
+}
+
+// Tileable 3D worley noise
+float worleyNoise(vec3 uv, float freq)
+{    
+    vec3 id = floor(uv);
+    vec3 p = fract(uv);
+    
+    float minDist = 10000.;
+    for (float x = -1.; x <= 1.; ++x)
+    {
+        for(float y = -1.; y <= 1.; ++y)
+        {
+            for(float z = -1.; z <= 1.; ++z)
+            {
+                vec3 offset = vec3(x, y, z);
+            	vec3 h = hash33(mod(id + offset, vec3(freq))) * .5 + .5;
+    			h += offset;
+            	vec3 d = p - h;
+           		minDist = min(minDist, dot(d, d));
+            }
+        }
+    }
+    
+    // inverted worley noise
+    return 1. - minDist;
+}
+
+
+// Fbm for Perlin noise based on iq's blog
+float perlinfbm(vec3 p, float freq, int octaves)
+{
+    float G = exp2(-.85);
+    float amp = 1.;
+    float noise = 0.;
+    for (int i = 0; i < octaves; ++i)
+    {
+        noise += amp * gradientNoise(p * freq, freq);
+        freq *= 2.;
+        amp *= G;
+    }
+    
+    return noise;
+}
+
+// Tileable Worley fbm inspired by Andrew Schneider's Real-Time Volumetric Cloudscapes
+// chapter in GPU Pro 7.
+float worleyFbm(vec3 p, float freq)
+{
+    return worleyNoise(p*freq, freq) * .625 +
+        	 worleyNoise(p*freq*2., freq*2.) * .25 +
+        	 worleyNoise(p*freq*4., freq*4.) * .125;
+}
+
+float GenerateNoise3D_24(in vec3 p){
+
+	float pfbm= mix(1., perlinfbm(p * 0.5f, 4., 7), .5);
+    pfbm = abs(pfbm * 2. - 1.); // billowy perlin noise
+
+	vec4 iChannel0;
+
+	const float freq = 4;
+
+    iChannel0.g += worleyFbm(p, freq);
+    iChannel0.b += worleyFbm(p, freq*2.);
+    iChannel0.a += worleyFbm(p, freq*4.);
+    iChannel0.r += remap(pfbm, 0., 1.,  worleyFbm(p * 0.5f, freq), 1.); // perlin-worley
+
+	vec3 worley = iChannel0.yzw;
+	float perlinWorley = iChannel0.x;
+	float wfbm = worley.x * .625 +
+        		 worley.y * .125 +
+        		 worley.z * .25; 
+    
+    // cloud shape modeled after the GPU Pro 7 chapter
+    float cloud = remap(perlinWorley, wfbm - 1., 1., 0., 1.);
+    cloud = remap(cloud, .85, 1., 0., 1.); // fake cloud coverage
+	return max(cloud, 0.0f);
 }
 
 #endif

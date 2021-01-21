@@ -5,7 +5,6 @@
 
 const int shadowMapResolution = 2048; // The shadow resolution [256 512 1024 1572 2048 3072 4096 8192 16384]
 const float shadowDistance = 128; // How large the shadow map is [16 32 64 72 96 128 180 256]
-const int noiseTextureResolution = 512;
 
 #define ShaderPrecision highp
 

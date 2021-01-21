@@ -15,7 +15,7 @@ void main(){
         ShadingStruct Shading = ConstructShadingStructEmpty();
         // TODO: avoid recomputation of the sky flag
         MaskStruct Masks = DecompressMaskStruct(Flags);
-        Surface = ConstructSurfaceStructDeferred(gl_TexCoord[0].st, LightDirection);
+        Surface = ConstructSurfaceStructDeferred(gl_TexCoord[0].st, LightDirection, Masks);
         ShadeSurfaceStruct(Surface, Shading, Masks, LightDirection, CurrentSunColor); 
         ComputeColor(Surface, Shading);
         /* DRAWBUFFERS:7 */

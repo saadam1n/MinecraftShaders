@@ -9,6 +9,7 @@ struct MaskStruct {
     bool LightSource;
     bool Sun;
     bool Hand;
+    bool Water;
 };
 
 #define SKY_BIT   1
@@ -16,6 +17,7 @@ struct MaskStruct {
 #define LIGHT_SOURCE_BIT 4
 #define SUN_BIT 8
 #define HAND_BIT 16
+#define WATER_BIT 32
 
 MaskStruct ConstructMaskStruct(in float id){
     MaskStruct Masks;
@@ -28,6 +30,7 @@ MaskStruct ConstructMaskStruct(in float id){
     #else
     Masks.Hand = false;
     #endif
+    Masks.Water = (id == 8.0f) || (id == 9.0f);
     return Masks;
 }
 

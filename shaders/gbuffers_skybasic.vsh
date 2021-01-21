@@ -11,6 +11,7 @@ void main(){
     Masks.LightSource = false;
     Masks.Sun = false;
     Masks.Hand = false;
+    Masks.Water = false;
     fMasks = CompressMaskStruct(Masks);
     gl_Position = ftransform();
     gl_Position = vec4(0.0f);
