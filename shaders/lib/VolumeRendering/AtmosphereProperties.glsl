@@ -20,7 +20,8 @@ const float AbsorptionMie = 1.1f * ScatteringMie;
 const float ExtinctionMie = ScatteringMie + AbsorptionMie;
 
 const vec3 ScatteringOzone = vec3(0.0f); // Ozone does not scatter light
-const vec3 AbsorptionOzone = vec3(2.04e-5, 4.97e-5, 1.95e-6);
+const vec3 AbsorptionOzone = vec3(2.04e-5, 4.97e-5, 1.95e-6); //vec3(0.650,1.881,0.085) * 1.0e-6; // Values taken from A Scalable and Production Ready Sky and Atmosphere Rendering Technique
+//vec3(1.36820899679147f,3.31405330400124f, 0.13601728252538f) *  6.0e-6 * 2.504; // https://www.shadertoy.com/view/MllBR2 
 const vec3 ExtinctionOzone = ScatteringOzone + AbsorptionOzone;
 
 

@@ -1,6 +1,8 @@
 #ifndef VOLUMERENDERING_MOON_GLSL
 #define VOLUMERENDERING_MOON_GLSL 1
 
+#include "../Utility/TextureSampling.glsl"
+
 const vec3 MoonColor = vec3(0.15f, 0.2f, 1.3f);
 const vec3 MoonSkyColor = vec3(0.7f, 0.8f, 1.3f);
 
@@ -13,7 +15,7 @@ vec3 ComputeMoonColor(in vec3 view, in vec3 world){
     const float End = 0.9996f;
     // A solid color moon fits here batter, add noise if you want the moon to be textured
     float MoonStrength = (clamp(cosTheta, Begin, End) - Begin) / (End - Begin);
-    vec3 MoonFogPos = 100.0f * world;
+    vec3 MoonFogPos = 50.0f * world;
     //              Exp fog                                    Fog scale height trick                 Forward scatter phase approx
     float MoonFog = (1.0f - exp(-0.1f * length(MoonFogPos))) * exp(-max(MoonFogPos.y, 0.0f) / 7.0f) * ForwardScatter;
     float SkyDensity = pow(max(1.1f - world.y, 0.0f), 20.0f);
@@ -27,10 +29,11 @@ vec3 ComputeStarColor(vec3 world){
     //angles.y = asin(world.y);
     float blend = max(world.y, 0.0f);
     blend = blend * blend * blend;
-    return vec3(mix(0.0f, step(texture2D(noisetex, world.xz * 0.407f).r, 0.02f), blend));
+    return vec3(mix(0.0f, step(BicubicTexture(noisetex, world.xz * 0.407f).r, 0.002f), blend));
 }
 
 vec3 ComputeNightSky(in vec3 view, in vec3 world){
+    return vec3(0.0f); // right now disabled because of how bad it looks
     vec3 Moon = ComputeMoonColor(view, world);
     vec3 Star = ComputeStarColor(world);
     return Moon + Star;

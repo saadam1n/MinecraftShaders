@@ -1,5 +1,7 @@
 #version 120
 
+#define GBUFFERS
+
 #include "lib/Utility/Uniforms.glsl"
 #include "lib/Shading/Constructor.glsl"
 #include "lib/Shading/Color.glsl"

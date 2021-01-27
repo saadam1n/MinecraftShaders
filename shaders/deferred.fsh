@@ -20,7 +20,6 @@ void main(){
         ComputeColor(Surface, Shading);
         /* DRAWBUFFERS:7 */
         gl_FragData[0] = Shading.Color;
-
     } else {
         discard;
     }

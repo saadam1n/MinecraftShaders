@@ -12,9 +12,9 @@ const float SunSpotSize = cos(atan(SunRadius / SunDistance));
 const float SunSpotSize = cos(SunSizeRadians);
 #endif
 */
-const float SunSpotSize = cos(radians(3.5264000817029f));//cos(radians(0.5333f)); // Same value as void 2.0 dev
+const float SunSpotSize = cos(radians(1.9333f));// cos(radians(0.5333f)); // Same value as void 2.0 dev // cos(radians(2.5264000817029f));//
 
-const float SunBrightness = 30.0f;
+const float SunBrightness = 40.0f;
 const vec3 SunColor = vec3(1.0f, 1.0f, 1.0f) * SunBrightness;
 const float SunColorBrightness = 0.3f;
 

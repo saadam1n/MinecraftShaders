@@ -5,7 +5,7 @@
 
 #define BLOOM_SAMPLES 15
 
-#define COC_BLUR
+//#define COC_BLUR
 
 void main(){
     vec3 Bloom    = vec3(0.0f);

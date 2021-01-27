@@ -10,7 +10,7 @@ const int GhostCount = 8;
 const float GhostSpacing = 0.3f;
 const float ChromaticAberationStrength = 0.2f;
 const float GhostLOD = 0.0f;
-const vec3 GhostThreshold = vec3(30.0f);
+const vec3 GhostThreshold = vec3(5.0f);
 
 vec3 SampleChromaticAberrationColor(in vec2 Sample, in vec2 Offset){
     Offset *= ChromaticAberationStrength;
@@ -55,9 +55,9 @@ vec3 ComputeHalo(void){
 vec2 DefaultTexCoords[3] = vec2[3] (gl_TexCoord[0].st, gl_TexCoord[0].st, gl_TexCoord[0].st);
 
 void main(){
-    vec3 LensFlare = ComputeGhosts() * 0.12f;
+    vec3 LensFlare = ComputeGhosts() * 0.52f;
     vec3 Halo = ComputeHalo();
-    vec2 TexCoords[3] = isInRain ? ComputeWaterDropletCoords() : DefaultTexCoords;
+    vec2 TexCoords[3] = DefaultTexCoords;//isInRain ? ComputeWaterDropletCoords() : DefaultTexCoords;
     /* DRAWBUFFERS:37 */
     gl_FragData[0].rgb = LensFlare + Halo;
     gl_FragData[1].rgb = vec3(texture2D(colortex7, TexCoords[0]).r, texture2D(colortex7, TexCoords[1]).g, texture2D(colortex7, TexCoords[2]).b);

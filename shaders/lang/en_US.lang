@@ -15,6 +15,7 @@ option.HARDWARE_SHADOW_FILTERING=Hardware Accelerated Shadows
 
 option.INSCATTERING_STEPS=Atmosphere Quality
 option.MULTISCATTERING=Accurate Atmosphere Simulation
+option.OZONE_ABSORPTION=Ozone Absoption
 
 option.VOLUMETRIC_CLOUDS=Volumetric Clouds
 option.CLOUD_INSCATTERING_STEPS=Cloud Quality 0
@@ -26,7 +27,9 @@ value.TONEMAPPING_OPERATOR.0=ACES Filmic
 value.TONEMAPPING_OPERATOR.1=Reinhard
 
 option.COC_BLUR=Edge Blur
-option.HEXAGONAL_BOKEH=Hexagonal Bokeh
+option.BOKEH=Bokeh
+value.BOKEH.1=Hexagonal
+value.BOKEH.2=Octagonal
 option.DOF_KERNEL_SIZE=DOF Samples
 
 option.CHROMATIC_ABERATION_MULT=Chromatic Aberration Strength

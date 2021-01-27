@@ -1,5 +1,6 @@
 #version 120
 
+#define GBUFFERS
 #define GBUFFERS_HAND_WATER
 #define VERTEX
 

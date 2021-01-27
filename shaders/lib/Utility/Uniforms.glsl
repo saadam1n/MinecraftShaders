@@ -6,7 +6,7 @@
 
 const int shadowMapResolution = 2048; // The shadow resolution [256 512 1024 1572 2048 3072 4096 8192 16384]
 const float shadowDistance = 128; // How large the shadow map is [16 32 64 72 96 128 180 256]
-const int noiseTextureResolution = 1024;
+const int noiseTextureResolution = 512;
 
 #define ShaderPrecision highp
 
@@ -40,6 +40,15 @@ uniform sampler2D colortex4;
 uniform sampler2D colortex5;
 uniform sampler2D colortex6;
 uniform sampler2D colortex7;
+
+uniform sampler2D gcolor;
+uniform sampler2D gdepth;
+uniform sampler2D gnormal;
+uniform sampler2D composite;
+uniform sampler2D gaux1;
+uniform sampler2D gaux2;
+uniform sampler2D gaux3;
+uniform sampler2D gaux4;
 
 #define debugTex colortex6
 
@@ -82,11 +91,26 @@ uniform float eyeAltitude;
 uniform int isEyeInWater;
 
 uniform sampler2D normals;
+uniform vec3 shadowLightPosition;
+uniform sampler2D specular;
+uniform ivec2 atlasSize;
 
-#define PrecomputedOpticalDepth depthtex2
+#ifdef GBUFFERS
+sampler2D GetPrecomputedOpticalDepth(){
+    return gaux4;
+}
+#else
+sampler2D GetPrecomputedOpticalDepth(){
+    return depthtex1;
+}
+#endif
+
+#define PrecomputedOpticalDepth GetPrecomputedOpticalDepth()
 
 uniform vec3 moonPosition;
 uniform vec3 upPosition;
+
+
 
 // Custom Uniforms
 

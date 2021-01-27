@@ -4,7 +4,7 @@
 #include "../Utility/Uniforms.glsl"
 
 #define DOF_KERNEL_SIZE 12 // [3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30]
-#define HEXAGONAL_BOKEH
+#define BOKEH 1 // [1 2]
 
 // TODO: have only a single first pass
 // Both passes use the same input
@@ -25,23 +25,35 @@ void main() {
     int ValidSamples0 = 0;
     int ValidSamples1 = 0;
     
+    #if BOKEH == 1
     const float RotationAngle0 = radians(60.0f);
     const float RotationAngle1 = -RotationAngle0;
     const mat2 Rotation0 = mat2(cos(RotationAngle0), -sin(RotationAngle0), sin(RotationAngle0), cos(RotationAngle0));
     const mat2 Rotation1 = mat2(cos(RotationAngle1), -sin(RotationAngle1), sin(RotationAngle1), cos(RotationAngle1));
+    #else
+    const float RotationAngle0 = radians(45.0f);
+    const float RotationAngle1 = -RotationAngle0;
+    const mat2 Rotation0 = mat2(cos(RotationAngle0), -sin(RotationAngle0), sin(RotationAngle0), cos(RotationAngle0));
+    const mat2 Rotation1 = mat2(cos(RotationAngle1), -sin(RotationAngle1), sin(RotationAngle1), cos(RotationAngle1));
+    #endif
 
     for(float sample = -DOF_KERNEL_SIZE; sample <= DOF_KERNEL_SIZE; sample++){
 
+        #if BOKEH == 1
         #ifdef DOF_BOKEH_X
         vec2 Offset0 = vec2(sample, 0.0f);
         vec2 Offset1 = vec2(sample, 0.0f);
         #else
-        #ifdef HEXAGONAL_BOKEH
         vec2 Offset0 = Rotation0 * vec2(sample, 0.0f);
+        vec2 Offset1 = Rotation1 * vec2(sample, 0.0f);
+        #endif
+        #else
+        #ifdef DOF_BOKEH_X
+        vec2 Offset0 = vec2(sample, 0.0f);
         vec2 Offset1 = Rotation1 * vec2(sample, 0.0f);
         #else
         vec2 Offset0 = vec2(0.0f, sample);
-        vec2 Offset1 = vec2(0.0f, sample);
+        vec2 Offset1 = Rotation1 * vec2(0.0f, sample);
         #endif
         #endif
         Offset0 *= KernelSize0;

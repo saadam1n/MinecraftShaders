@@ -19,8 +19,8 @@ const float FogMaxDistance = 1000000.0f;
 
 vec3 ComputeFog(in vec3 world, in vec3 view, in vec3 color, in float sky = 1.0f){
     if(isEyeInWater == 1){
-        //coeffs taken from https://discord.com/channels/237199950235041794/736928196162879510/800612334904541184
-        vec3 coeff = vec3(0.4f, 0.07f, 0.03f);
+        //UE4 coeff
+        vec3 coeff = vec3(0.35, 0.07, 0.03);
         vec3 transmittance = exp(-coeff * length(view));
 
         return transmittance * color;

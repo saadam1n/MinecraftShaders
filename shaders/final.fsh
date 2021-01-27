@@ -17,7 +17,7 @@ const bool colortex7MipmapEnabled = false;
 void main(){
 	vec2 TexCoords;
 	TexCoords = gl_TexCoord[0].st;
-    vec4 color = texture2DLod(colortex7, TexCoords, 0.0f);
+    vec4 color = texture2DLod(colortex7, TexCoords, 0.0f).rgba;
 	//color.rgb = vec3(GenerateNoise3D_24(vec3(gl_TexCoord[0].st, 0.0f)));
 	color.rgb = ComputeHighDynamicRangeExposure(color.rgb, Exposure);
 	//#ifdef HIGH_DYNAMIC_RANGE

@@ -87,8 +87,15 @@ vec3 GetCameraPositionEarth(void){
     return vec3(0.0f, y, 0.0f);
 }
 
+#define OZONE_ABSORPTION
+
 vec3 LookUpOpticalDepth(in float altitude, in float vertical_angle) {
-    return texture2DLod(PrecomputedOpticalDepth, vec2(altitude / AtmosphereHeight, vertical_angle * 0.5f + 0.5f), 0).rgb;
+    #ifdef OZONE_ABSORPTION
+    vec3 OpticalDepth = texture2DLod(PrecomputedOpticalDepth, vec2(altitude / AtmosphereHeight, vertical_angle * 0.5f + 0.5f), 0).rgb;
+    #else
+    vec3 OpticalDepth = vec3(texture2DLod(PrecomputedOpticalDepth, vec2(altitude / AtmosphereHeight, vertical_angle * 0.5f + 0.5f), 0).rg, 0.0f);
+    #endif
+    return OpticalDepth;
 }
 
 vec3 LookUpOpticalDepth(in Ray ray) {
@@ -106,7 +113,11 @@ vec3 ComputeViewOpticalDepth(in Ray SampleRay, in vec3 cameraopticaldepth){
 
 vec3 EarthColor = vec3(0.0f, 1.0f, 0.0f) * 0.0f;
 
-vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, out vec3 ViewOpticalDepth) {
+#ifdef MULTISCATTERING
+#undef MULTISCATTERING
+#endif
+
+vec3 ComputeAtmosphericScattering(in vec3 light, in vec3 dir, inout vec3 ViewOpticalDepth) {
     if(isInNether){
         return vec3(0.0f);
     }

@@ -42,7 +42,7 @@ void main(){
         Color.rgb = Draw2DClouds(WorldDirection, isNight? MoonSkyColor : LightColor, Color.rgb);
         #endif
         if(WorldDirection.y > 0.0f){
-            Color.rgb = ComputeCloudColor(GetEyePositionWorld(), WorldDirection, SunDirection, LightColor, Color.rgb);
+            Color.rgb = ComputeCloudColor(GetEyePositionWorld(), WorldDirection, SunDirection, LightColor * 8.0f, Color.rgb);
             
         }
     } else {

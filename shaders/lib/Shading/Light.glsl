@@ -42,7 +42,7 @@ vec3 GetLightColor(void){
     vec3 SunColor = ComputeSunColor(SunDirection, SunDirection) + ComputeAtmosphereColor(SunDirection, SunDirection);
     #ifndef DEFERRED1
     #ifdef VIBRANT_SUN_LIGHTING
-    SunColor *= 0.05f * vec3(0.8f, 0.9f, 1.1f);
+    SunColor *= 0.35f * vec3(0.8f, 0.9f, 1.1f);
     #else
     SunColor *= 0.025f * vec3(0.8f, 0.9f, 1.1f);
     #endif

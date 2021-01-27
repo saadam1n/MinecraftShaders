@@ -80,7 +80,7 @@ vec3 ComputeVisibility(in vec3 ShadowCoord){
     return ShadowInterpolateY;
 }
 
-vec2 ComputeCircularKernel(in int sample){
+vec2 ComputeCircularKernelRandom(in int sample){
     // First compute a random place to sample from noistex
     vec2 NoiseCoords = gl_TexCoord[0].st + float(sample) / SHADOW_SAMPLES; 
     // Sample noise
@@ -93,6 +93,18 @@ vec2 ComputeCircularKernel(in int sample){
     */
     vec2 NoiseVec = normalize(NoiseData.xy * 2.0f - 1.0f);
     return NoiseVec * NoiseData.z;
+}
+
+vec2 ComputeCircularKernel(in int isample, in float offset = 0.0f) {
+    float fsample = float(isample) / SHADOW_SAMPLES + offset;
+    float angle = fsample * 2.0f * MATH_PI;
+    return vec2(cos(angle), sin(angle)) * SoftShadowScale;
+}
+
+vec2 ComputeCircularKernel2(in int isample, in float offset = 0.0f) {
+    float fsample = float(isample) / SHADOW_SAMPLES + offset;
+    float angle =  float(isample);//fsample * 2.0f * MATH_PI;
+    return vec2(cos(angle), sin(angle)) * SoftShadowScale;
 }
 
 vec3 ComputeShadow(in SurfaceStruct Surface){

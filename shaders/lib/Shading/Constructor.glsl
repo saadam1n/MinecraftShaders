@@ -21,9 +21,15 @@ const float WaterShininess = 128.0f;
 SurfaceStruct ConstructSurfaceStructForward(in vec3 fragcoord, in vec3 normal, in vec3 l, in MaskStruct Masks){
     SurfaceStruct Surface;
 
-    Surface.Diffuse = SampleTextureAtlas(gl_TexCoord[0].st);
-    // If the alpha channel does not have the gamma backed into it, someone please let me knwo
-    Surface.Diffuse.rgba = pow(Surface.Diffuse.rgba, vec4(2.2f));
+    if(Masks.Water){
+        Surface.Diffuse = vec4(0.02f, 0.1f, 0.5f, 0.75f);
+        //Surface.Diffuse.rgb =  normal;
+    } else {
+        Surface.Diffuse = SampleTextureAtlas(gl_TexCoord[0].st);
+        // If the alpha channel does not have the gamma backed into it, someone please let me knwo
+        Surface.Diffuse.rgba = pow(Surface.Diffuse.rgba, vec4(2.2f));
+    }
+
     Surface.Normal =  normal;
     Surface.ViewNormal = mat3(gbufferModelView) * normal;
     //Surface.Diffuse.rgb = Surface.Normal;

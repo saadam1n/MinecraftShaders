@@ -3,10 +3,14 @@ My minecraft shaders for minecraft. This project will receive a lot fewer update
 # TODO List
 New TODO list:
  - Use `noistex` to generate perlin and simplex noise. This will useful for the fBm noise use in VL cloud rendering
+ - Screen space reflections
+ - Realistic ocean waves
+ - Reflective shadow maps
  - Multiple scattering atmosphere
  - Move the gbuffers files into one program
  - Proper waterdroplet on camera simulation
  - Add a focal engine branch once focal engine goes public, and rename this branch to optifine branch 
+
 Old TODO list:
 - ~~Add forward rendering for gbuffers_water and other forward shader stages~~ 
 - ~~Improve shadows while optimially keeping shadowDistance around 128.0f and shadowResolution under 2048~~
@@ -66,4 +70,5 @@ This shader is based of the works of:
 - [John Chapman - Screen Space Lens Flare](https://john-chapman.github.io/2017/11/05/pseudo-lens-flare.html)
 - [Shadertoy robobo1221 - Real time PBR Volumetric Clouds](https://www.shadertoy.com/view/MstBWs)
 - [Andrew Schneider and Nathan Vos - The real-time volumetric cloudscapes of Horizon: Zero Dawn](http://advances.realtimerendering.com/s2015/The%20Real-time%20Volumetric%20Cloudscapes%20of%20Horizon%20-%20Zero%20Dawn%20-%20ARTR.pdf)
-- [Google Fractal Terrain Generation - Fractal Beownian Motion](https://code.google.com/archive/p/fractalterraingeneration/wikis/Fractional_Brownian_Motion.wiki)
+- [Google Fractal Terrain Generation - Fractional Brownian Motion](https://code.google.com/archive/p/fractalterraingeneration/wikis/Fractional_Brownian_Motion.wiki)
+- [Generating and Rendering Procedural Clouds in Real Time on Programmable 3D Graphics Hardware](https://www.researchgate.net/publication/224688956_Generating_and_Rendering_Procedural_Clouds_in_Real_Time_on_Programmable_3D_Graphics_Hardware)

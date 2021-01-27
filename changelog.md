@@ -1,3 +1,8 @@
+Update 1.0.5
+- Water waves
+- Better 2D and 3D clouds
+- Water reflection
+- Volumetric lighting
 Update 1.0.4
 - Screen space lens flare
 - Fixed hand depth at hand depth 1x 

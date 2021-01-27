@@ -1,5 +1,7 @@
 #version 120
 
+#define GBUFFERS
+
 #include "lib/Utility/Uniforms.glsl"
 #include "lib/Shading/Constructor.glsl"
 #include "lib/Shading/Color.glsl"
@@ -18,6 +20,8 @@ void main () {
     Surface = ConstructSurfaceStructForward(GetScreenCoords(gl_FragCoord), ComputeWaterWave(WavePosition, TBN, Masks.Water), LightDirection, Masks);
     ShadeSurfaceStruct(Surface, Shading, Masks, LightDirection, CurrentSunColor); 
     ComputeColor(Surface, Shading);
+    //Shading.Color.rgb = vec3(texture2D(gaux4, gl_FragCoord.xy / ScreenSize).rgb);
+    //Shading.Color.a = 1.0f;
     //Shading.Color = texture2D(shadowcolor0, Surface.ShadowScreen.st).rgb;
     /* DRAWBUFFERS:71 */
     gl_FragData[0] = Shading.Color;

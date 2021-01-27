@@ -28,7 +28,6 @@ vec3 ComputeSunColor(in vec3 light, in vec3 dir){
     dot_dist /= SunSpotSize;
     vec3 LimbDarkening = ComputeLimbDarkening(dot_dist);
     vec3 ViewPos =  GetCameraPositionEarth();
-    float dist = RaySphereIntersect(ViewPos, dir, AtmosphereRadius);
     Ray SunRay;
     SunRay.Origin = ViewPos;
     SunRay.Direction = dir;

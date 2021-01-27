@@ -26,7 +26,7 @@ But in Optifine, we have limited texture space so I would have to store the 1D L
 #include <mutex>
 #include <chrono>
 
-const int LUT_Resolution = 2048;
+const int LUT_Resolution = 512;
 const int LUT_Size = LUT_Resolution * LUT_Resolution;
 const int OpticalDepthSamples = 1024; // Since I'm too lazy to do trapezoidal integration
 const double ScaleHeightRayleigh = 7994.0;
@@ -271,7 +271,7 @@ int main() {
 	}
 	delete[] WorkerThreads;
 	float* BinaryData = ConvertFloatToDouble((double*)TextureData, LUT_Size * sizeof(OpticalDepth) / sizeof(double)); // 3 doubles per optical depth, evals to 3
-	BinaryFile File("../../shaders/lib/Resources/OpticalDepth.dat");
+	BinaryFile File("OpticalDepth.dat"); // ../../shaders/lib/Resources/
 	File.WriteBuffer(BinaryData, 3 * LUT_Size * sizeof(float));
 	delete[] BinaryData;
 	delete[] TextureData;

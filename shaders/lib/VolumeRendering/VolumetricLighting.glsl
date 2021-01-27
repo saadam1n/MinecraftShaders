@@ -2,6 +2,9 @@
 #define VOLUME_RENDERING_VOLUMETRIC_LIGHTING_GLSL 1
 
 #include "../Transform/Eye.glsl"
+#include "../Transform/Distort.glsl"
+#include "../Random/Noise3D.glsl"
+#include "../Shading/Shadow.glsl"
 
 // TOOD:
 // Updated VL using actual papers instead of doing it myself
@@ -69,6 +72,54 @@ void ComputeVolumetricLighting(inout SurfaceStruct Surface, inout ShadingStruct 
     Shading.Volumetric = vec3(0.0f);
     Shading.OpticalDepth =  vec3(0.0f);
     #endif
+}
+
+// Approximation based on LVutner's implementation 
+// Some stuff was also taken from VOID 2.0 Dev 
+#define VL_APPROX_SAMPLES 32
+#define VL_APPROX_STEP_LENGTH
+vec2 JitterScale = ScreenSize / noiseTextureResolution;
+#ifdef VL_APPROX_STEP_LENGTH
+vec3 ComputeVolumetricLightingApprox(in vec3 playerpos, in vec3 viewpos, in vec3 col, out vec3 OpticalDepth)
+#else
+vec3 ComputeVolumetricLightingApprox(in vec3 playerpos, in vec3 viewpos, in vec3 col)
+#endif
+ {
+    #ifndef VL_APPROX_STEP_LENGTH
+    const vec3 Scatter = vec3(0.6f);
+    #else
+    const vec3 Scatter = vec3(0.05f);
+    #endif
+    float Jitter = 0.1f * (texture2D(noisetex, JitterScale * gl_TexCoord[0].st).r * 2.0f - 1.0f);
+    mat4 ShadowTransform = shadowProjection * shadowModelView;
+    vec3 EyePosition = gbufferModelViewInverse[3].xyz;
+    vec3 Segment = playerpos - EyePosition;
+    vec3 Direction = normalize(Segment);
+    float Phase = PhaseHenyeyGreenstein(dot(Direction, LightDirection), -0.16f);
+    float Position = Jitter;
+    float StepLength = length(Segment) / VL_APPROX_SAMPLES;
+    vec3 Accum = vec3(0.0f);
+    for(int sample = 0; sample < VL_APPROX_SAMPLES; sample++){
+        vec3 SamplePosition = EyePosition + Direction * (Position + 0.5f * StepLength);
+        float Density = exp(-max(SamplePosition.y + cameraPosition.y - 64.0f, 0.0f) / 10.0f);
+        SamplePosition = (ShadowTransform * vec4(SamplePosition, 1.0f)).xyz;
+        SamplePosition = DistortShadowSample(SamplePosition);
+        #ifdef VL_APPROX_STEP_LENGTH
+        OpticalDepth += Density * Scatter * StepLength;
+        vec3 Transmittance = exp(-OpticalDepth);
+        #else
+        vec3 Transmittance = vec3(1.0f);
+        #endif
+        Accum += ComputeVisibility(SamplePosition) * Transmittance * Density;
+        Position += StepLength;
+    }
+    #ifndef VL_APPROX_STEP_LENGTH
+    Accum /= VL_APPROX_SAMPLES;
+    #else
+    Accum *= StepLength;
+    #endif
+    vec3 VL = Scatter * Phase * col * Accum;
+    return VL;
 }
 
 #endif

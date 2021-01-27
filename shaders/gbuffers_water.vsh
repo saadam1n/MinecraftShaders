@@ -1,5 +1,6 @@
 #version 120
 
+#define GBUFFERS
 #define VERTEX
 
 #include "lib/Utility/Attributes.glsl"

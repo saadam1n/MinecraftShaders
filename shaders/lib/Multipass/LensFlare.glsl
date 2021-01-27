@@ -40,7 +40,7 @@ const float Kernel[] = float[] (
 );
 
 void main() {
-    vec3 BlurAccum = vec3(0.0f);
+    vec3 BlurAccum = vec3(0.0f);    
     for(float sample = -BLUR_SAMPLES; sample <= BLUR_SAMPLES; sample++) {
         #ifdef LENS_FLARE_BLUR_X
         vec2 Coord = vec2(sample / viewWidth, 0.0f);

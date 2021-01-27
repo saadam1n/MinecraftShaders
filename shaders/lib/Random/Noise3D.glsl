@@ -770,7 +770,7 @@ const float CloudDenisty = 1.0f;
 
 float GenerateNoise3D_18(vec3 p) {
 	const float earthRadius = 6371000.0;
-    p = vec3(p.x, length(p + vec3(0.0, 100000.0f, 0.0)) - 100000.0f, p.z);
+    p = vec3(p.x, length(p + vec3(0.0, earthRadius, 0.0)) - earthRadius, p.z);
   
     
     float time = frameTimeCounter * CloudSpeed;
@@ -982,5 +982,21 @@ float GenerateNoise3D_24(in vec3 p){
     cloud = remap(cloud, .85, 1., 0., 1.); // fake cloud coverage
 	return max(cloud, 0.0f);
 }
+
+float GenerateNoise3D_25(in vec3 position){
+  vec2 Noise;
+
+  float p = floor(position.z);
+  float f = position.z - p;
+  
+  vec2 Offset = position.z + fract(position.xy);
+
+  Noise.x = texture2D(noisetex, position.xy         ).x;
+  Noise.y = texture2D(noisetex, position.xy + Offset).x;
+
+  return mix(Noise.x, Noise.y, f);
+}
+
+
 
 #endif
