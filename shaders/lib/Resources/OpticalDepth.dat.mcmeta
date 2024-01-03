@@ -1,0 +1,6 @@
+{
+	"OpticalDepth": {
+		"blur": true,
+		"clamp": true
+	}
+}
